@@ -1,0 +1,67 @@
+{
+    "success": true,
+    "data": {
+        "total": {
+            "cost": "7635.50",
+            "prize": "0.00"
+        },
+        "offset": [
+            1,
+            -1
+        ],
+        "coupons": [
+            {
+                "id": "1412693942",
+                "tsn": "97486682728567",
+                "card": "17450",
+                "race": "3",
+                "type": "16",
+                "multiplier": 10,
+                "cost": "10.00",
+                "status": "played",
+                "atlar": "1,2/1,2",
+                "hipodrom": "PARADISE",
+                "play_date": "06/02/2025 23:58:33",
+                "bet": "İkili Bahis",
+                "bet_en": "4'lü Ganyan",
+                "cancelable": false,
+                "statusHuman": "Değerlendirilmedi"
+            },
+
+            {
+                "id": "1412693943",
+                "tsn": "97486682728567",
+                "card": "17450",
+                "race": "3",
+                "type": "16",
+                "multiplier": 10,
+                "cost": "10.00",
+                "status": "played",
+                "atlar": "1,2/1,2",
+                "hipodrom": "PARADISE",
+                "play_date": "06/02/2025 23:58:33",
+                "bet": "4'lü Ganyan",
+                "bet_en": "4'lü Ganyan",
+                "cancelable": false,
+                "statusHuman": "Değerlendirilmedi"
+            },
+                        {
+                "id": "1412693944",
+                "tsn": "97486682728567",
+                "card": "17450",
+                "race": "3",
+                "type": "16",
+                "multiplier": 10,
+                "cost": "10.00",
+                "status": "played",
+                "atlar": "1,3/1,3",
+                "hipodrom": "PARADISE",
+                "play_date": "06/02/2025 23:58:33",
+                "bet": "İkili Bahis",
+                "bet_en": "4'lü Ganyan",
+                "cancelable": false,
+                "statusHuman": "Değerlendirilmedi"
+            }
+        ]
+    }
+}
