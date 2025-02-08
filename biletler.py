@@ -16,6 +16,13 @@ from selenium.webdriver.support import expected_conditions as EC
 
 import pandas as pd
 
+# ACCOUNT-DATA
+sourceAccount = "kumsalkarauzum97@gmail.com"
+sourcePassword = "Kumsalkara."
+
+targetAccount = "cemalcandogan@gmail.com"
+targetPassword = "Covet13po."
+betType = "Çifte Bahis"
 
 def login_to_ebayi():
     """
@@ -61,8 +68,8 @@ def login_to_ebayi():
 
     # The login form data
     login_payload = {
-        "user": "kumsalkarauzum97@gmail.com",
-        "pass": "Kumsalkara.",
+        "user": sourceAccount,
+        "pass": sourcePassword,
         "keep_login": "true"
     }
 
@@ -146,7 +153,7 @@ def post_biletlerim_retrievedata(session):
     payload = {
         #   "startdate": "2024-12-22",
         "enddate": today_str,
-        "limit": "1",
+        "limit": "100",
         "offset": "0,0",
         "order": "desc",
         "status": "played",
@@ -540,13 +547,13 @@ def save_created_bilet(bilet_id):
 def main():
     # Step 1: Load created bilet IDs
     created_bilets = load_created_bilets()
-    #
-    # # # Step 2: Log in via Requests
-    # session = login_to_ebayi()
-    # #
-    # # # Step 3: Call /biletlerim to refresh/confirm token
-    # post_biletlerim(session)
-    # post_biletlerim_retrievedata(session)
+
+    # Step 2: Log in via Requests
+    session = login_to_ebayi()
+
+    # Step 3: Call /biletlerim to refresh/confirm token
+    post_biletlerim(session)
+    post_biletlerim_retrievedata(session)
 
     # Step 4: Load bilets from JSON
     bilets = load_bilets_from_json("my-output.json")
@@ -556,7 +563,7 @@ def main():
         return
 
     # Filter only "5'li Ganyan" bilets
-    bilets = bilets[bilets["bet"] == "İkili Bahis"]
+    bilets = bilets[bilets["bet"] == betType]
 
     if bilets.empty:
         print("No coupons found. Exiting.")
@@ -584,7 +591,7 @@ def main():
 
     try:
         # Step 7: Log in via Selenium
-        login_to_site(driver, "cemalcandogan@gmail.com", "Covet13po.")
+        login_to_site(driver, targetAccount, targetPassword)
 
         # Step 8: Process each coupon
         for index, coupon in bilets.iterrows():
