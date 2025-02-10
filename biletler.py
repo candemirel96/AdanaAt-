@@ -22,7 +22,7 @@ sourcePassword = "Kumsalkara."
 
 targetAccount = "cemalcandogan@gmail.com"
 targetPassword = "Covet13po."
-betType = "Çifte Bahis"
+betType = "5'li Ganyan"
 
 def login_to_ebayi():
     """
@@ -153,7 +153,7 @@ def post_biletlerim_retrievedata(session):
     payload = {
         #   "startdate": "2024-12-22",
         "enddate": today_str,
-        "limit": "100",
+        "limit": "50",
         "offset": "0,0",
         "order": "desc",
         "status": "played",
@@ -490,23 +490,37 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
         button.click()
         print("Clicked the submit button to create the bilet.")
 
-        time.sleep(1)
-        # Step 9: Locate and click the checkbox in the pop-up
-        label = driver.find_element(By.XPATH, "//label[@for='approveChecksum']")
+        # Step 9: Wait for the checkbox in the pop-up (retry mechanism)
+        checkbox_appeared = False
+        wait_time = 10  # Maximum wait time (seconds)
+        check_interval = 1  # Check every 1 second
+
+        for _ in range(wait_time // check_interval):  # Loop to keep checking
+            try:
+                label = driver.find_element(By.XPATH, "//label[@for='approveChecksum']")
+                driver.execute_script("arguments[0].scrollIntoView(true);", label)
+                actions = ActionChains(driver)
+                actions.move_to_element(label).click().perform()
+                print("Selected the checkbox in the confirmation pop-up.")
+                checkbox_appeared = True
+                break  # Exit loop once checkbox is found and clicked
+            except NoSuchElementException:
+                print("Waiting for the confirmation pop-up checkbox to appear...")
+                time.sleep(check_interval)  # Wait and retry
+
+        if not checkbox_appeared:
+            print("Error: Checkbox did not appear after waiting. Skipping this ticket and moving to the next one.")
+            return  # Simply return to continue with the next ticket in the main loop
 
         # Scroll the label into view
         driver.execute_script("arguments[0].scrollIntoView(true);", label)
 
-        # Use ActionChains to click the label
-        actions = ActionChains(driver)
-        actions.move_to_element(label).click().perform()
-        print("Selected the checkbox via its label in the pop-up.")
-
-        # time.sleep(1)
         # Step 10: Locate and click the 'Onayla' button
-        approve_button = driver.find_element(By.ID, "approveButton")
+        approve_button = WebDriverWait(driver, 10).until(
+            EC.element_to_be_clickable((By.ID, "approveButton"))
+        )
         approve_button.click()
-        print("Clicked the 'Onayla' button to complete the bilet creation.")
+        print("Clicked the 'Onayla' button to finalize the bilet.")
 
         # Navigate back to the main page
         driver.get("https://ebayi.tjk.org")
