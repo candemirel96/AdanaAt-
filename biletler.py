@@ -22,7 +22,7 @@ sourcePassword = "Kumsalkara."
 
 targetAccount = "cemalcandogan@gmail.com"
 targetPassword = "Covet13po."
-betType = "5'li Ganyan"
+betTypes = ["5'li Ganyan"]
 
 def login_to_ebayi():
     """
@@ -87,7 +87,6 @@ def login_to_ebayi():
 
     return session
 
-
 def post_biletlerim(session):
     """
     Step 2: Call POST /biletlerim with minimal data (Content-Length: 3, etc.).
@@ -131,7 +130,6 @@ def post_biletlerim(session):
     print("Cookies after /biletlerim:", session.cookies.get_dict())
     return resp
 
-
 def post_biletlerim_retrievedata(session):
     """
     Step 3: Finally call POST /biletlerim/retrievedata with the correct CSRF token
@@ -171,7 +169,6 @@ def post_biletlerim_retrievedata(session):
 
     return resp
 
-
 def save_json_to_file(json_resp, filename="response.json"):
     """
     Saves the given JSON object to a file with pretty indentation.
@@ -182,7 +179,6 @@ def save_json_to_file(json_resp, filename="response.json"):
         json.dump(json_resp, f, ensure_ascii=False, indent=4)
 
     print(f"JSON response successfully saved to {filename}")
-
 
 def load_bilets_from_json(json_file):
     """
@@ -231,25 +227,6 @@ def load_bilets_from_json(json_file):
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}")
         return pd.DataFrame()
-
-
-# def setup_selenium-ui():
-#     """
-#     Configures and returns a Selenium WebDriver (Chrome).
-#     Assumes chromedriver.exe is in the same directory as this script.
-#     """
-#     chrome_options = Options()
-#     # Uncomment the next line to run Chrome in headless mode (no GUI)
-#     # chrome_options.add_argument("--headless")
-#
-#     # Initialize the Service object with the path to chromedriver.exe
-#     service = Service(executable_path="chromedriver.exe")
-#
-#     # Initialize the Chrome WebDriver with the Service object
-#     driver = webdriver.Chrome(service=service, options=chrome_options)
-#     driver.maximize_window()
-#     return driver
-
 
 def setup_selenium():
     """
@@ -334,57 +311,6 @@ def login_to_site(driver, username, password):
         print(f"An error occurred during login: {e}. Screenshot saved as 'login_error.png'. Exiting.")
         driver.quit()
         exit(1)
-
-
-# def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
-#     """
-#     Creates a bilet by navigating to the 'BAHİS YAP' page, selecting the specified hipodrom,
-#     selecting the race type, checking the appropriate horses based on the 'atlar' data,
-#     entering the multiplier value, and completing the submission process.
-#     """
-#     try:
-#         # Existing steps for navigating, selecting hipodrom, race type, and entering multiplier
-#
-#         # Step 8: Click the 'OYNA' button to submit the bilet
-#         play_button = driver.find_element(By.XPATH, "//button[text()='OYNA']")
-#         play_button.click()
-#         print("Clicked the 'OYNA' button to submit the bilet.")
-#
-#         # Wait for the pop-up to appear
-#         WebDriverWait(driver, 10).until(
-#             EC.presence_of_element_located((By.ID, "approveChecksum"))
-#         )
-#         print("Pop-up appeared.")
-#
-#         # Step 9: Locate and click the label for the checkbox
-#         label = driver.find_element(By.XPATH, "//label[@for='approveChecksum']")
-#
-#         # Scroll the label into view
-#         driver.execute_script("arguments[0].scrollIntoView(true);", label)
-#
-#         # Use ActionChains to click the label
-#         actions = ActionChains(driver)
-#         actions.move_to_element(label).click().perform()
-#         print("Selected the checkbox via its label in the pop-up.")
-#
-#         # Step 10: Locate and click the 'Onayla' button
-#         approve_button = driver.find_element(By.ID, "approveButton")
-#         approve_button.click()
-#         print("Clicked the 'Onayla' button to complete the bilet creation.")
-#
-#         # Wait for the confirmation or next step (if any)
-#         time.sleep(2)
-#
-#         # Navigate back to the main page
-#         driver.get("https://ebayi.tjk.org")
-#         print("Navigated back to the main page.")
-#
-#     except Exception as e:
-#         print(f"An unexpected error occurred during bilet creation: {e}")
-#         driver.save_screenshot("create_bilet_unexpected_error.png")
-#         driver.quit()
-#         exit(1)
-
 
 def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
     """
@@ -492,7 +418,7 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
 
         # Step 9: Wait for the checkbox in the pop-up (retry mechanism)
         checkbox_appeared = False
-        wait_time = 10  # Maximum wait time (seconds)
+        wait_time = 30  # Maximum wait time (seconds)
         check_interval = 1  # Check every 1 second
 
         for _ in range(wait_time // check_interval):  # Loop to keep checking
@@ -576,14 +502,14 @@ def main():
         print("No coupons to process. Exiting.")
         return
 
-    # Filter only "5'li Ganyan" bilets
-    bilets = bilets[bilets["bet"] == betType]
+    # Filter only "5'li Ganyan" and other selected bet types
+    bilets = bilets[bilets["bet"].isin(betTypes)]
 
     if bilets.empty:
-        print("No coupons found. Exiting.")
+        print("No matching coupons found. Exiting.")
         return
 
-    # Step 5: Remove duplicates
+    # Step 5: Remove duplicates by filtering already created bilets
     bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
 
     # Normalize hipodrom names
@@ -597,6 +523,7 @@ def main():
         "VAAL": "Vaal Guney Afrika",
         "PARADISE": "Turf Paradise ABD",
         "CAGNESSUR": "Cagnes Sur Mer Fransa",
+        "MAHONING": "Mahoning Valley ABD"
     }
     bilets["hipodrom"] = bilets["hipodrom"].replace(replacements)
 
@@ -605,36 +532,64 @@ def main():
 
     try:
         # Step 7: Log in via Selenium
-        login_to_site(driver, targetAccount, targetPassword)
+        login_to_site(driver, "cemalcandogan@gmail.com", "Covet13po.")
 
-        # Step 8: Process each coupon
-        for index, coupon in bilets.iterrows():
-            bilet_id = str(coupon["id"])  # Convert to string to match JSON format
+        # Track processed tickets and consecutive empty refreshes
+        processed_bilets = set()
+        no_new_ticket_count = 0
 
-            # Skip if already created
-            if bilet_id in created_bilets:
-                print(f"Skipping duplicate bilet {bilet_id}")
-                continue
+        while no_new_ticket_count < 3:  # Stop after 3 consecutive empty refreshes
+            found_new_ticket = False  # Track if any new tickets were processed
 
-            print(f"Processing new coupon {index + 1} of {len(bilets)}...")
+            for index, coupon in bilets.iterrows():
+                bilet_id = str(coupon["id"])  # Ensure it's a string
 
-            # Extract required fields
-            race = coupon["race"]
-            multiplier = coupon["multiplier"]
-            atlar = coupon["atlar"]
-            hipodrom = coupon["hipodrom"]
-            bet = coupon["bet"]
+                # Check if already created
+                if bilet_id in created_bilets or bilet_id in processed_bilets:
+                    continue  # Skip already processed tickets
 
-            # Create the bilet
-            create_bilet(driver, race, multiplier, atlar, hipodrom, bet)
+                # Extract required fields
+                race = coupon["race"]
+                multiplier = coupon["multiplier"]
+                atlar = coupon["atlar"]
+                hipodrom = coupon["hipodrom"]
+                bet = coupon["bet"]
 
-            # Save this bilet ID as created
-            save_created_bilet(bilet_id)
+                # Process the bilet
+                create_bilet(driver, race, multiplier, atlar, hipodrom, bet)
+
+                # Save newly created bilet
+                save_created_bilet(bilet_id)
+
+                # Mark bilet as processed in this session
+                processed_bilets.add(bilet_id)
+                created_bilets.add(bilet_id)  # Ensure it doesn't reappear after refresh
+                found_new_ticket = True
+
+            if not found_new_ticket:
+                no_new_ticket_count += 1
+                print(f"\n🔄 No new tickets found. Attempt {no_new_ticket_count}/3.\n")
+            else:
+                no_new_ticket_count = 0  # Reset counter if new tickets found
+
+            if no_new_ticket_count < 3:
+                print("\n✅ Refreshing `my-output.json` to check for new tickets...\n")
+                post_biletlerim_retrievedata(session)
+                bilets = load_bilets_from_json("my-output.json")
+
+                # Reapply hipodrom replacements and bet type filtering
+                bilets["hipodrom"] = bilets["hipodrom"].replace(replacements)
+                bilets = bilets[bilets["bet"].isin(betTypes)]
+
+                # Ensure no duplicates are reprocessed
+                bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
+
+        print("\n🚪 No new tickets found for 3 consecutive refreshes. Exiting.\n")
 
     finally:
         # Step 9: Close the browser
         driver.quit()
-        print("All  coupons processed and browser closed.")
+        print("All coupons processed and browser closed.")
 
 
 if __name__ == "__main__":
