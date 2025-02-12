@@ -680,7 +680,7 @@ def new_main():
                 bilets = bilets[bilets["bet"].isin(betTypes) & (bilets["cancelable"] == True)]
                 bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
 
-        print("\n🚪 No new tickets found for 3 consecutive refreshes. Waiting 5 minutes before retrying...\n")
+        print("\n🚪 Bilet Yok Sigara Molası...\n")
         time.sleep(300)  # Wait 5 minutes before retrying
 if __name__ == "__main__":
     new_main()
