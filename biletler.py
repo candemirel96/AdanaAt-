@@ -614,7 +614,11 @@ def new_main():
         "PARADISE": "Turf Paradise ABD",
         "CAGNESSUR": "Cagnes Sur Mer Fransa",
         "MAHONING": "Mahoning Valley ABD",
-        "SOUTHWELL": "Southwell Birleşik Krallık"
+        "SOUTHWELL": "Southwell Birleşik Krallık",
+        "IZMIR" : "İzmir",
+        "PAKENHAM" : "Pakenham Avustralya",
+        "CHELMSFORD" : "Chelmsford City Birleşik Krallık",
+
     }
 
     # Infinite loop to keep checking for new tickets
