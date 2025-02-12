@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import time
 from datetime import date, datetime
 
@@ -23,7 +24,7 @@ sourcePassword = "Kumsalkara."
 targetAccount = "cemalcandogan@gmail.com"
 targetPassword = "Covet13po."
 betTypes = ["5'li Ganyan","4'lü Ganyan"]
-
+sigara = 60
 def login_to_ebayi():
     """
     Step 1: Log in to ebayi.tjk.org (POST /giris) with user, pass, keep_login.
@@ -596,7 +597,6 @@ def new_main():
 
     # Step 3: Call /biletlerim to refresh/confirm token
     post_biletlerim(session)
-    post_biletlerim_retrievedata(session)
 
     # Step 4: Set up Selenium
     driver = setup_selenium()
@@ -628,8 +628,8 @@ def new_main():
         bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]  # Remove duplicates
 
         if bilets.empty:
-            print("\n🚪 No valid tickets found. Waiting 5 minutes before retrying...\n")
-            time.sleep(300)  # Wait 5 minutes before trying again
+            print(f"\n🚬 Bilet Yok! {sigara // 60} dakika sigara molası...\n")
+            time.sleep(sigara)
             continue  # Restart loop
 
         # Track processed tickets and consecutive empty refreshes
@@ -680,7 +680,7 @@ def new_main():
                 bilets = bilets[bilets["bet"].isin(betTypes) & (bilets["cancelable"] == True)]
                 bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
 
-        print("\n🚪 Bilet Yok Sigara Molası...\n")
-        time.sleep(300)  # Wait 5 minutes before retrying
+        print(f"\n🚬 Bilet Yok! Sigara Molası: {sigara // 60} dakika...\n")
+        time.sleep(sigara)  # Wait 5 minutes before retrying
 if __name__ == "__main__":
     new_main()
