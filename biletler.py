@@ -22,7 +22,7 @@ sourcePassword = "Kumsalkara."
 
 targetAccount = "cemalcandogan@gmail.com"
 targetPassword = "Covet13po."
-betTypes = ["5'li Ganyan"]
+betTypes = ["5'li Ganyan","4'lü Ganyan","Sıralı İkili Bahis"]
 
 def login_to_ebayi():
     """
@@ -191,7 +191,7 @@ def load_bilets_from_json(json_file):
         pd.DataFrame: DataFrame containing filtered coupons data with only specified fields.
     """
     # Define the fields you want to extract from each coupon
-    desired_fields = ['id', 'race', 'multiplier', 'atlar', 'hipodrom', 'bet']
+    desired_fields = ['id', 'race', 'multiplier', 'atlar', 'hipodrom', 'bet', 'cancelable']
 
     try:
         with open(json_file, "r", encoding="utf-8") as f:
@@ -503,7 +503,7 @@ def main():
         return
 
     # Filter only "5'li Ganyan" and other selected bet types
-    bilets = bilets[bilets["bet"].isin(betTypes)]
+    bilets = bilets[bilets["bet"].isin(betTypes) & (bilets["cancelable"] == True)]
 
     if bilets.empty:
         print("No matching coupons found. Exiting.")
@@ -515,7 +515,7 @@ def main():
     # Normalize hipodrom names
     replacements = {
         "GULFSTREAM": "Gulfstream Park ABD",
-        "ŞANLIURFA": "Şanlıurfa",
+        "SANLIURFA": "Şanlıurfa",
         "ISTANBUL": "İstanbul",
         "WHAMPTON": "Wolverhampton Birleşik Krallık",
         "ANTALYA": "Antalya",
@@ -523,7 +523,8 @@ def main():
         "VAAL": "Vaal Guney Afrika",
         "PARADISE": "Turf Paradise ABD",
         "CAGNESSUR": "Cagnes Sur Mer Fransa",
-        "MAHONING": "Mahoning Valley ABD"
+        "MAHONING": "Mahoning Valley ABD",
+        "SOUTHWELL": "Southwell Birleşik Krallık"
     }
     bilets["hipodrom"] = bilets["hipodrom"].replace(replacements)
 
