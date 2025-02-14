@@ -434,6 +434,9 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
             except NoSuchElementException:
                 print("Waiting for the confirmation pop-up checkbox to appear...")
                 time.sleep(check_interval)  # Wait and retry
+            except Exception as e:
+                print(f"Unexpected error while waiting for checkbox: {e}")
+                return  # Return to main loop on any unexpected error
 
         if not checkbox_appeared:
             print("Error: Checkbox did not appear after waiting. Skipping this ticket and moving to the next one.")
