@@ -604,25 +604,32 @@ def new_main():
 
     # Normalize hipodrom names
     replacements = {
-        "GULFSTREAM": "Gulfstream Park ABD",
-        "SANLIURFA": "Şanlıurfa",
-        "ISTANBUL": "İstanbul",
-        "WHAMPTON": "Wolverhampton Birleşik Krallık",
         "ANTALYA": "Antalya",
-        "PHILADELPH": "Philadelphia ABD",
-        "VAAL": "Vaal Guney Afrika",
-        "PARADISE": "Turf Paradise ABD",
+        "BURSA": "Bursa",
         "CAGNESSUR": "Cagnes Sur Mer Fransa",
+        "CHELMSFORD": "Chelmsford City Birleşik Krallık",
+        "FAIRVIEW": "Fairview Guney Afrika",
+        "GULFSTREAM": "Gulfstream Park ABD",
+        "ISTANBUL": "İstanbul",
+        "IZMIR": "İzmir",
         "MAHONING": "Mahoning Valley ABD",
+        "MOONEEVALL": "Moonee Valley Avustralya",
+        "PARADISE": "Turf Paradise ABD",
+        "PAKENHAM": "Pakenham Avustralya",
+        "PHILADELPH": "Philadelphia ABD",
+        "SANLIURFA": "Şanlıurfa",
         "SOUTHWELL": "Southwell Birleşik Krallık",
-        "IZMIR" : "İzmir",
-        "PAKENHAM" : "Pakenham Avustralya",
-        "CHELMSFORD" : "Chelmsford City Birleşik Krallık",
-
+        "TURFFONTEI": "Turffontein Guney Afrika",
+        "VAAL": "Vaal Guney Afrika",
+        "WHAMPTON": "Wolverhampton Birleşik Krallık"
     }
 
     # Infinite loop to keep checking for new tickets
     while True:
+        # 🟢 Always refresh my-output.json at the start of each cycle!
+        print("\n🔄 Yeni biletler kontrol ediliyor...\n")
+        post_biletlerim_retrievedata(session)
+
         # Step 5: Load bilets from JSON
         bilets = load_bilets_from_json("my-output.json")
 
@@ -632,8 +639,13 @@ def new_main():
         bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]  # Remove duplicates
 
         if bilets.empty:
-            print(f"\n🚬 Bilet Yok! {sigara // 60} dakika sigara molası...\n")
-            time.sleep(sigara)
+            print(f"\n🚬 Bilet Yok! Sigara Molası: {sigara // 60} dakika...\n")
+            for remaining in range(sigara, 0, -1):
+                sys.stdout.write(f"\r⏳ Bekleniyor: {remaining} saniye kaldı... ")
+                sys.stdout.flush()
+                time.sleep(1)
+
+            print("\n✅ Süre doldu! Tekrar kontrol ediliyor...\n")
             continue  # Restart loop
 
         # Track processed tickets and consecutive empty refreshes
@@ -685,6 +697,11 @@ def new_main():
                 bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
 
         print(f"\n🚬 Bilet Yok! Sigara Molası: {sigara // 60} dakika...\n")
-        time.sleep(sigara)  # Wait 5 minutes before retrying
+        for remaining in range(sigara, 0, -1):
+            sys.stdout.write(f"\r⏳ Bekleniyor: {remaining} saniye kaldı... ")
+            sys.stdout.flush()
+            time.sleep(1)
+
+        print("\n✅ Süre doldu! Tekrar kontrol ediliyor...\n")
 if __name__ == "__main__":
     new_main()
