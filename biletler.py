@@ -23,7 +23,7 @@ sourcePassword = "Kumsalkara."
 
 targetAccount = "cemalcandogan@gmail.com"
 targetPassword = "Covet13po."
-betTypes = ["5'li Ganyan","4'lü Ganyan"]
+betTypes = ["5'li Ganyan","4'lü Ganyan","Çifte Bahis"]
 sigara = 60
 def login_to_ebayi():
     """
