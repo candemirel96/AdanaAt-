@@ -318,6 +318,17 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
     Navigates to the 'BAHİS YAP' page, expands the dropdown, and selects the specified hipodrom.
     """
     try:
+        # Step 0: Ensure we are on the main page
+        driver.get("https://ebayi.tjk.org")
+        print("Navigated to the main page.")
+        try:
+            clear_button = driver.find_element(By.XPATH, "//button[@data-selector='clear-button']")
+            clear_button.click()
+            print("Clicked on 'Clear Bilet' button.")
+        except NoSuchElementException:
+            print("Clear Bilet button not found. Continuing without clicking.")
+
+
         # Step 1: Click on the 'BAHİS YAP' link
         bahis_yap_link = driver.find_element(By.XPATH,
                                              "//a[contains(@href, '/bahis-yap-advanced') and contains(text(), 'BAHİS YAP')]")
