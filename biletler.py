@@ -23,7 +23,7 @@ sourcePassword = "Kumsalkara."
 
 targetAccount = "cemalcandogan@gmail.com"
 targetPassword = "Covet13po."
-betTypes = ["5'li Ganyan","4'lü Ganyan","Çifte Bahis"]
+betTypes = ["5'li Ganyan","4'lü Ganyan","3'lü Ganyan","Çifte Bahis","Sıralı İkili Bahis"]
 sigara = 60
 def login_to_ebayi():
     """
@@ -319,7 +319,7 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
     """
     try:
         # Step 0: Ensure we are on the main page
-        driver.get("https://ebayi.tjk.org")
+        driver.get("https://ebayi.tjk.org/bahis-yap-advanced")
         print("Navigated to the main page.")
         try:
             clear_button = driver.find_element(By.XPATH, "//button[@data-selector='clear-button']")
