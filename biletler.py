@@ -319,14 +319,8 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
     """
     try:
         # Step 0: Ensure we are on the main page
-        driver.get("https://ebayi.tjk.org/bahis-yap-advanced")
+        driver.get("https://ebayi.tjk.org")
         print("Navigated to the main page.")
-        try:
-            clear_button = driver.find_element(By.XPATH, "//button[@data-selector='clear-button']")
-            clear_button.click()
-            print("Clicked on 'Clear Bilet' button.")
-        except NoSuchElementException:
-            print("Clear Bilet button not found. Continuing without clicking.")
 
 
         # Step 1: Click on the 'BAHİS YAP' link
@@ -337,6 +331,14 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
 
         # Wait for the page to load
         time.sleep(2)
+
+
+        try:
+            clear_button = driver.find_element(By.XPATH, "//button[@data-selector='clear-button']")
+            clear_button.click()
+            print("Clicked on 'Clear Bilet' button.")
+        except NoSuchElementException:
+            print("Clear Bilet button not found. Continuing without clicking.")
 
         # Step 2: Locate and click the dropdown toggle to expand it
         dropdown_toggle = driver.find_element(By.CSS_SELECTOR, "a.btn.btn-glossred.dropdown-toggle")
