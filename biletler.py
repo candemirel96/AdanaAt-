@@ -23,7 +23,7 @@ sourcePassword = "Kumsalkara."
 
 targetAccount = "cemalcandogan@gmail.com"
 targetPassword = "Covet13po."
-betTypes = ["5'li Ganyan","4'lü Ganyan","3'lü Ganyan","Çifte Bahis","Sıralı İkili Bahis"]
+betTypes = ["6'lı Ganyan","5'li Ganyan","4'lü Ganyan","3'lü Ganyan","Çifte Bahis","Sıralı İkili Bahis"]
 sigara = 60
 def login_to_ebayi():
     """
@@ -159,11 +159,11 @@ def post_biletlerim_retrievedata(session):
     }
 
     resp = session.post(url, headers=headers, data=payload)
-    print("POST /biletlerim/retrievedata -> status:", resp.status_code)
+    # print("POST /biletlerim/retrievedata -> status:", resp.status_code)
 
     try:
         json_resp = resp.json()
-        print("Retrieved data JSON:", json_resp)
+        # print("Retrieved data JSON:", json_resp)
         save_json_to_file(json_resp, "my-output.json")
     except ValueError:
         print("Response text (not JSON):", resp.text)
@@ -179,7 +179,7 @@ def save_json_to_file(json_resp, filename="response.json"):
         # indent=4 makes the file more readable (pretty-printed)
         json.dump(json_resp, f, ensure_ascii=False, indent=4)
 
-    print(f"JSON response successfully saved to {filename}")
+    # print(f"JSON response successfully saved to {filename}")
 
 def load_bilets_from_json(json_file):
     """
@@ -355,9 +355,6 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
         # Click the hipodrom link
         hipodrom_element.click()
         print(f"Selected hipodrom: {hipodrom}")
-
-        # Wait for any subsequent page or elements to load after selection
-        # time.sleep(2)
 
         # Step 4: Locate and click the dropdown toggle for race type
         # Locate the specific anchor using its class and text
