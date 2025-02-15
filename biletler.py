@@ -617,6 +617,7 @@ def new_main():
 
     # Normalize hipodrom names
     replacements = {
+        "ADANA": "Adana",
         "ANTALYA": "Antalya",
         "BURSA": "Bursa",
         "CAGNESSUR": "Cagnes Sur Mer Fransa",
@@ -625,11 +626,13 @@ def new_main():
         "GULFSTREAM": "Gulfstream Park ABD",
         "ISTANBUL": "İstanbul",
         "IZMIR": "İzmir",
+        "KENILWORTH": "Kenilworth Guney Afrika",
         "MAHONING": "Mahoning Valley ABD",
         "MOONEEVALL": "Moonee Valley Avustralya",
         "PARADISE": "Turf Paradise ABD",
         "PAKENHAM": "Pakenham Avustralya",
         "PHILADELPH": "Philadelphia ABD",
+        "PINJARRA": "Pinjarra Park Avustralya",
         "SANLIURFA": "Şanlıurfa",
         "SOUTHWELL": "Southwell Birleşik Krallık",
         "TURFFONTEI": "Turffontein Guney Afrika",
@@ -647,9 +650,7 @@ def new_main():
         bilets = load_bilets_from_json("my-output.json")
 
         # Apply filters
-        bilets["hipodrom"] = bilets["hipodrom"].replace(replacements)
-        bilets = bilets[bilets["bet"].isin(betTypes) & (bilets["cancelable"] == True)]
-        bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]  # Remove duplicates
+
 
         if bilets.empty:
             print(f"\n🚬 Bilet Yok! Sigara Molası: {sigara // 60} dakika...\n")
@@ -661,6 +662,9 @@ def new_main():
             print("\n✅ Süre doldu! Tekrar kontrol ediliyor...\n")
             continue  # Restart loop
 
+        bilets["hipodrom"] = bilets["hipodrom"].replace(replacements)
+        bilets = bilets[bilets["bet"].isin(betTypes) & (bilets["cancelable"] == True)]
+        bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]  # Remove duplicates
         # Track processed tickets and consecutive empty refreshes
         processed_bilets = set()
         no_new_ticket_count = 0
