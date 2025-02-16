@@ -365,9 +365,7 @@ def close_invalid_race_popup(driver):
     except NoSuchElementException:
         return False
 def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
-    """
-    Navigates to the 'BAHİS YAP' page, expands the dropdown, and selects the specified hipodrom.
-    """
+
     try:
         # Step 0: Ensure we are on the main page
         driver.get("https://ebayi.tjk.org")
@@ -510,19 +508,22 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
             print("Clicked the 'Onayla' button to finalize the bilet.")
         except Exception as e:
             print(f"⚠️ Failed to click 'Onayla': {e}")
-            time.sleep(1)  # short pause before refreshing
+            time.sleep(1)
             driver.get("https://ebayi.tjk.org")
-            return
+            return False  # ❌ Failure
 
         # Step 9: Return to Main Page
+        time.sleep(1)
         driver.get("https://ebayi.tjk.org")
         print("✅ Bilet created successfully. Navigated back to the main page.")
 
+        return True  # ✅ Success
+
     except Exception as e:
         print(f"❌ Unexpected Error in Bilet Creation: {e}")
-        time.sleep(1)  # short pause before refreshing
-        driver.get("https://ebayi.tjk.org")
-
+    time.sleep(1)
+    driver.get("https://ebayi.tjk.org")
+    return False  # ❌ Failure
 
 def load_created_bilets():
     """Loads the list of created bilet IDs from a file."""
@@ -599,23 +600,15 @@ def main():
                 hipodrom = coupon["hipodrom"]
                 bet = coupon["bet"]
 
-                try:
-                    create_bilet(driver, race, multiplier, atlar, hipodrom, bet)
+                success = create_bilet(driver, race, multiplier, atlar, hipodrom, bet)
+
+                if success:
                     save_created_bilet(bilet_id)
-                    created_bilets = load_created_bilets()  # 🔄 Sync back after each success
+                    created_bilets = load_created_bilets()  # Keep this if you need to refresh from file
                     processed_bilets.add(bilet_id)
                     found_new_ticket = True
-
-                except CheckboxNotFoundException as e:
-                    print(f"⚠️ {e} — Moving to the next ticket.")
-                    driver.get("https://ebayi.tjk.org")
-                    continue
-
-                except Exception as e:
-                    print(f"⚠️ Unexpected error with bilet {bilet_id}: {e}")
-                    driver.get("https://ebayi.tjk.org")
-                    continue
-
+                else:
+                    print(f"❌ Bilet creation failed for ID {bilet_id}. Skipping.")
             if not found_new_ticket:
                 no_new_ticket_count += 1
                 print(f"\n🔄 No new tickets found. Attempt {no_new_ticket_count}/3.\n")
