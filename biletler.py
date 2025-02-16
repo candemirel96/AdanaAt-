@@ -28,13 +28,17 @@ sourcePassword = "Kumsalkara."
 targetAccount = "cemalcandogan@gmail.com"
 targetPassword = "Covet13po."
 
-# # CAN TEST
+#  CAN TEST
 # targetAccount = "candemirel96@gmail.com"
 # targetPassword = "O123Gelincik"
 
 betTypes = ["6'lı Ganyan","5'li Ganyan","4'lü Ganyan","3'lü Ganyan","Çifte Bahis","Sıralı İkili Bahis"]
 sigara = 30
-maxCost = 100
+max_amount_by_race_type = {
+    "6'lı Ganyan": 40,
+    "Çifte Bahis": 80,
+    "Sıralı İkili Bahis": 80
+}
 # Normalize hipodrom name
 replacements = {
     "ADANA": "Adana",
@@ -189,7 +193,7 @@ def post_biletlerim_retrievedata(session):
     payload = {
         #   "startdate": "2024-12-22",
         "enddate": today_str,
-        "limit": "50",
+        "limit": "100",
         "offset": "0,0",
         "order": "desc",
         "status": "played",
@@ -295,18 +299,6 @@ def setup_selenium():
 
 
 def login_to_site(driver, username, password):
-    """
-    Logs into the website using Selenium by filling out the login form
-    and navigates to 'BAHİS YAP'.
-
-    Args:
-        driver (webdriver.Chrome): Selenium WebDriver instance.
-        username (str): Username for login.
-        password (str): Password for login.
-
-    Returns:
-        None
-    """
     # Navigate to the login page
 
     driver.get("https://ebayi.tjk.org")  # Adjust URL if different
@@ -343,7 +335,7 @@ def login_to_site(driver, username, password):
         print("Clicked the login button.")
 
         # Optional: Wait for a short duration to let the page load
-        time.sleep(3)  # Adjust as needed based on website's response time
+        time.sleep(1)  # Adjust as needed based on website's response time
 
         # Call the navigate_to_bahis_yap function to go to 'BAHİS YAP' page
 
@@ -585,7 +577,7 @@ def main():
         bilets = bilets[
             (bilets["bet"].isin(betTypes)) &
             (bilets["cancelable"] == True) &
-            (bilets["cost"] <= maxCost)
+            (bilets["cost"].astype(float) <= bilets["bet"].map(max_amount_by_race_type).fillna(float('inf')))
         ]
         bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
 
@@ -630,7 +622,7 @@ def main():
                 bilets = bilets[
                     (bilets["bet"].isin(betTypes)) &
                     (bilets["cancelable"] == True) &
-                    (bilets["cost"] <= maxCost)
+                    (bilets["cost"].astype(float) <= bilets["bet"].map(max_amount_by_race_type).fillna(float('inf')))
                     ]
                 bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
 
