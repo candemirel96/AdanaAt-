@@ -542,6 +542,7 @@ def main():
         "ISTANBUL": "İstanbul",
         "IZMIR": "İzmir",
         "KENILWORTH": "Kenilworth Guney Afrika",
+        "LINGFIELD": "Lingfield Birleşik Krallık",
         "MAHONING": "Mahoning Valley ABD",
         "MOONEEVALL": "Moonee Valley Avustralya",
         "PARADISE": "Turf Paradise ABD",
