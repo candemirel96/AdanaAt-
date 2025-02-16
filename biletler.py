@@ -34,7 +34,7 @@ targetPassword = "Covet13po."
 
 betTypes = ["6'lı Ganyan","5'li Ganyan","4'lü Ganyan","3'lü Ganyan","Çifte Bahis","Sıralı İkili Bahis"]
 sigara = 30
-maxCost = 50
+maxCost = 100
 # Normalize hipodrom name
 replacements = {
     "ADANA": "Adana",
@@ -555,14 +555,15 @@ def main():
     # Step 3: Call /biletlerim to refresh/confirm token
     post_biletlerim(session)
 
-    # Step 4: Set up Selenium
-    driver = setup_selenium()
-    login_to_site(driver, targetAccount, targetPassword)
+
 
     processed_bilets = set()  # Reset this for every big cycle (every refresh)
     # Infinite loop to keep checking for new tickets
     while True:
 
+        # Step 4: Set up Selenium
+        driver = setup_selenium()
+        login_to_site(driver, targetAccount, targetPassword)
 
         print("\n🔄 Yeni biletler kontrol ediliyor...\n")
         post_biletlerim_retrievedata(session)
@@ -640,6 +641,8 @@ def main():
             time.sleep(1)
 
         print("\n✅ Süre doldu! Tekrar kontrol ediliyor...\n")
+        # 🚨 Close & Restart Selenium after break
+        driver.quit()
 class CheckboxNotFoundException(Exception):
     pass
 if __name__ == "__main__":
