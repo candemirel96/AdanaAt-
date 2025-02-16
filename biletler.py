@@ -34,6 +34,34 @@ targetPassword = "Covet13po."
 
 betTypes = ["6'lı Ganyan","5'li Ganyan","4'lü Ganyan","3'lü Ganyan","Çifte Bahis","Sıralı İkili Bahis"]
 sigara = 30
+
+# Normalize hipodrom names
+replacements = {
+    "ADANA": "Adana",
+    "ANTALYA": "Antalya",
+    "BURSA": "Bursa",
+    "CAGNESSUR": "Cagnes Sur Mer Fransa",
+    "CHELMSFORD": "Chelmsford City Birleşik Krallık",
+    "FAIRVIEW": "Fairview Guney Afrika",
+    "GULFSTREAM": "Gulfstream Park ABD",
+    "ISTANBUL": "İstanbul",
+    "IZMIR": "İzmir",
+    "KENILWORTH": "Kenilworth Guney Afrika",
+    "LINGFIELD": "Lingfield Birleşik Krallık",
+    "MAHONING": "Mahoning Valley ABD",
+    "MOONEEVALL": "Moonee Valley Avustralya",
+    "PARADISE": "Turf Paradise ABD",
+    "PAKENHAM": "Pakenham Avustralya",
+    "PHILADELPH": "Philadelphia ABD",
+    "PINJARRA": "Pinjarra Park Avustralya",
+    "SANLIURFA": "Şanlıurfa",
+    "SCOTTSVILL": "Scottsville Guney Afrika",
+    "SHATIN": "Sha Tin Hong Kong",
+    "SOUTHWELL": "Southwell Birleşik Krallık",
+    "TURFFONTEI": "Turffontein Guney Afrika",
+    "VAAL": "Vaal Guney Afrika",
+    "WHAMPTON": "Wolverhampton Birleşik Krallık"
+}
 def login_to_ebayi():
     """
     Step 1: Log in to ebayi.tjk.org (POST /giris) with user, pass, keep_login.
@@ -529,34 +557,6 @@ def main():
     # Step 4: Set up Selenium
     driver = setup_selenium()
     login_to_site(driver, targetAccount, targetPassword)
-
-    # Normalize hipodrom names
-    replacements = {
-        "ADANA": "Adana",
-        "ANTALYA": "Antalya",
-        "BURSA": "Bursa",
-        "CAGNESSUR": "Cagnes Sur Mer Fransa",
-        "CHELMSFORD": "Chelmsford City Birleşik Krallık",
-        "FAIRVIEW": "Fairview Guney Afrika",
-        "GULFSTREAM": "Gulfstream Park ABD",
-        "ISTANBUL": "İstanbul",
-        "IZMIR": "İzmir",
-        "KENILWORTH": "Kenilworth Guney Afrika",
-        "LINGFIELD": "Lingfield Birleşik Krallık",
-        "MAHONING": "Mahoning Valley ABD",
-        "MOONEEVALL": "Moonee Valley Avustralya",
-        "PARADISE": "Turf Paradise ABD",
-        "PAKENHAM": "Pakenham Avustralya",
-        "PHILADELPH": "Philadelphia ABD",
-        "PINJARRA": "Pinjarra Park Avustralya",
-        "SANLIURFA": "Şanlıurfa",
-        "SCOTTSVILL": "Scottsville Guney Afrika",
-        "SHATIN": "Sha Tin Hong Kong",
-        "SOUTHWELL": "Southwell Birleşik Krallık",
-        "TURFFONTEI": "Turffontein Guney Afrika",
-        "VAAL": "Vaal Guney Afrika",
-        "WHAMPTON": "Wolverhampton Birleşik Krallık"
-    }
 
     processed_bilets = set()  # Reset this for every big cycle (every refresh)
     # Infinite loop to keep checking for new tickets
