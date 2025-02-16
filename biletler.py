@@ -20,11 +20,14 @@ import pandas as pd
 # ACCOUNT-DATA
 sourceAccount = "kumsalkarauzum97@gmail.com"
 sourcePassword = "Kumsalkara."
+# CEMAL TEST
+# sourceAccount = "cemalcandogan@gmail.com"
+# sourcePassword = "Covet13po."
 
 targetAccount = "cemalcandogan@gmail.com"
 targetPassword = "Covet13po."
 betTypes = ["6'lı Ganyan","5'li Ganyan","4'lü Ganyan","3'lü Ganyan","Çifte Bahis","Sıralı İkili Bahis"]
-sigara = 60
+sigara = 30
 def login_to_ebayi():
     """
     Step 1: Log in to ebayi.tjk.org (POST /giris) with user, pass, keep_login.
@@ -158,17 +161,21 @@ def post_biletlerim_retrievedata(session):
         "status": "played",
     }
 
-    resp = session.post(url, headers=headers, data=payload)
-    # print("POST /biletlerim/retrievedata -> status:", resp.status_code)
+    attempts = 0
+    while attempts < 3:
+        try:
+            resp = session.post(url, headers=headers, data=payload)
+            resp.raise_for_status()
+            json_resp = resp.json()
+            save_json_to_file(json_resp, "my-output.json")
+            print("Tickets refreshed successfully.")
+            return json_resp
+        except (requests.ConnectionError, requests.Timeout, ConnectionResetError) as e:
+            print(f"Connection error: {e}. Retrying in 5 seconds...")
+            attempts += 1
+            time.sleep(5)
 
-    try:
-        json_resp = resp.json()
-        # print("Retrieved data JSON:", json_resp)
-        save_json_to_file(json_resp, "my-output.json")
-    except ValueError:
-        print("Response text (not JSON):", resp.text)
-
-    return resp
+    print("Failed to refresh tickets after 3 attempts.")
 
 def save_json_to_file(json_resp, filename="response.json"):
     """
@@ -313,6 +320,15 @@ def login_to_site(driver, username, password):
         driver.quit()
         exit(1)
 
+def close_invalid_race_popup(driver):
+    try:
+        modal_close_button = driver.find_element(By.XPATH, "//div[contains(@class, 'invalid-race')]//button[text()='Tamam']")
+        modal_close_button.click()
+        print("Closed the invalid race modal.")
+        time.sleep(1)  # Let it settle
+        return True
+    except NoSuchElementException:
+        return False
 def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
     """
     Navigates to the 'BAHİS YAP' page, expands the dropdown, and selects the specified hipodrom.
@@ -322,15 +338,27 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
         driver.get("https://ebayi.tjk.org")
         print("Navigated to the main page.")
 
+        # Step 1: Click on the 'BAHİS YAP' link with modal check
+        max_attempts = 5
+        attempts = 0
 
-        # Step 1: Click on the 'BAHİS YAP' link
-        bahis_yap_link = driver.find_element(By.XPATH,
-                                             "//a[contains(@href, '/bahis-yap-advanced') and contains(text(), 'BAHİS YAP')]")
-        bahis_yap_link.click()
-        print("Clicked on 'BAHİS YAP' link.")
+        while attempts < max_attempts:
+            try:
+                bahis_yap_link = driver.find_element(By.XPATH,
+                                                     "//a[contains(@href, '/bahis-yap-advanced') and contains(text(), 'BAHİS YAP')]")
+                bahis_yap_link.click()
+                print("Clicked on 'BAHİS YAP' link.")
+                break  # Success
+            except Exception as e:
+                if close_invalid_race_popup(driver):
+                    print(f"Modal closed. Retrying... ({attempts + 1}/{max_attempts})")
+                else:
+                    print(f"Unexpected click interception: {e}")
+            attempts += 1
+            time.sleep(1)
 
-        # Wait for the page to load
-        time.sleep(2)
+        if attempts == max_attempts:
+            raise Exception("Failed to click 'BAHİS YAP' after multiple attempts due to modal issues.")
 
 
         try:
@@ -340,6 +368,7 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
         except NoSuchElementException:
             print("Clear Bilet button not found. Continuing without clicking.")
 
+        time.sleep(1)
         # Step 2: Locate and click the dropdown toggle to expand it
         dropdown_toggle = driver.find_element(By.CSS_SELECTOR, "a.btn.btn-glossred.dropdown-toggle")
         dropdown_toggle.click()
@@ -497,111 +526,8 @@ def save_created_bilet(bilet_id):
     with open("created_bilets.json", "w", encoding="utf-8") as f:
         json.dump(list(created_bilets), f, ensure_ascii=False, indent=4)  # Save as a list
 
-# def main():
-#     # Step 1: Load created bilet IDs
-#     created_bilets = load_created_bilets()
-#
-#     # Step 2: Log in via Requests
-#     session = login_to_ebayi()
-#
-#     # Step 3: Call /biletlerim to refresh/confirm token
-#     post_biletlerim(session)
-#     post_biletlerim_retrievedata(session)
-#
-#     # Step 4: Load bilets from JSON
-#     bilets = load_bilets_from_json("my-output.json")
-#
-#     if bilets.empty:
-#         print("No coupons to process. Exiting.")
-#         return
-#
-#     # Filter only "5'li Ganyan" and other selected bet types
-#     bilets = bilets[bilets["bet"].isin(betTypes) & (bilets["cancelable"] == True)]
-#
-#     # Step 5: Remove duplicates by filtering already created bilets
-#     bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
-#
-#     # Normalize hipodrom names
-#     replacements = {
-#         "GULFSTREAM": "Gulfstream Park ABD",
-#         "SANLIURFA": "Şanlıurfa",
-#         "ISTANBUL": "İstanbul",
-#         "WHAMPTON": "Wolverhampton Birleşik Krallık",
-#         "ANTALYA": "Antalya",
-#         "PHILADELPH": "Philadelphia ABD",
-#         "VAAL": "Vaal Guney Afrika",
-#         "PARADISE": "Turf Paradise ABD",
-#         "CAGNESSUR": "Cagnes Sur Mer Fransa",
-#         "MAHONING": "Mahoning Valley ABD",
-#         "SOUTHWELL": "Southwell Birleşik Krallık"
-#     }
-#     bilets["hipodrom"] = bilets["hipodrom"].replace(replacements)
-#
-#     # Step 6: Set up Selenium
-#     driver = setup_selenium()
-#
-#     try:
-#         # Step 7: Log in via Selenium
-#         login_to_site(driver, "cemalcandogan@gmail.com", "Covet13po.")
-#
-#         # Track processed tickets and consecutive empty refreshes
-#         processed_bilets = set()
-#         no_new_ticket_count = 0
-#
-#         while no_new_ticket_count < 3:  # Stop after 3 consecutive empty refreshes
-#             found_new_ticket = False  # Track if any new tickets were processed
-#
-#             for index, coupon in bilets.iterrows():
-#                 bilet_id = str(coupon["id"])  # Ensure it's a string
-#
-#                 # Check if already created
-#                 if bilet_id in created_bilets or bilet_id in processed_bilets:
-#                     continue  # Skip already processed tickets
-#
-#                 # Extract required fields
-#                 race = coupon["race"]
-#                 multiplier = coupon["multiplier"]
-#                 atlar = coupon["atlar"]
-#                 hipodrom = coupon["hipodrom"]
-#                 bet = coupon["bet"]
-#
-#                 # Process the bilet
-#                 create_bilet(driver, race, multiplier, atlar, hipodrom, bet)
-#
-#                 # Save newly created bilet
-#                 save_created_bilet(bilet_id)
-#
-#                 # Mark bilet as processed in this session
-#                 processed_bilets.add(bilet_id)
-#                 created_bilets.add(bilet_id)  # Ensure it doesn't reappear after refresh
-#                 found_new_ticket = True
-#
-#             if not found_new_ticket:
-#                 no_new_ticket_count += 1
-#                 print(f"\n🔄 No new tickets found. Attempt {no_new_ticket_count}/3.\n")
-#             else:
-#                 no_new_ticket_count = 0  # Reset counter if new tickets found
-#
-#             if no_new_ticket_count < 3:
-#                 print("\n✅ Refreshing `my-output.json` to check for new tickets...\n")
-#                 post_biletlerim_retrievedata(session)
-#                 bilets = load_bilets_from_json("my-output.json")
-#
-#                 # Reapply hipodrom replacements and bet type filtering
-#                 bilets["hipodrom"] = bilets["hipodrom"].replace(replacements)
-#                 bilets = bilets[bilets["bet"].isin(betTypes) & (bilets["cancelable"] == True)]
-#
-#                 # Ensure no duplicates are reprocessed
-#                 bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
-#
-#         print("\n🚪 No new tickets found for 3 consecutive refreshes. Exiting.\n")
-#
-#     finally:
-#         # Step 9: Close the browser
-#         driver.quit()
-#         print("All coupons processed and browser closed.")
 
-def new_main():
+def main():
     # Step 1: Load created bilet IDs
     created_bilets = load_created_bilets()
 
@@ -634,6 +560,8 @@ def new_main():
         "PHILADELPH": "Philadelphia ABD",
         "PINJARRA": "Pinjarra Park Avustralya",
         "SANLIURFA": "Şanlıurfa",
+        "SCOTTSVILL": "Scottsville Guney Afrika",
+        "SHATIN": "Sha Tin Hong Kong",
         "SOUTHWELL": "Southwell Birleşik Krallık",
         "TURFFONTEI": "Turffontein Guney Afrika",
         "VAAL": "Vaal Guney Afrika",
@@ -649,11 +577,11 @@ def new_main():
         # Step 5: Load bilets from JSON
         bilets = load_bilets_from_json("my-output.json")
 
-        # Apply filters
+
 
 
         if bilets.empty:
-            print(f"\n🚬 Bilet Yok! Sigara Molası: {sigara // 60} dakika...\n")
+            print(f"\n🚬 Bilet Yok! Sigara Molası: {sigara} saniye...\n")
             for remaining in range(sigara, 0, -1):
                 sys.stdout.write(f"\r⏳ Bekleniyor: {remaining} saniye kaldı... ")
                 sys.stdout.flush()
@@ -662,6 +590,7 @@ def new_main():
             print("\n✅ Süre doldu! Tekrar kontrol ediliyor...\n")
             continue  # Restart loop
 
+        # Apply filters
         bilets["hipodrom"] = bilets["hipodrom"].replace(replacements)
         bilets = bilets[bilets["bet"].isin(betTypes) & (bilets["cancelable"] == True)]
         bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]  # Remove duplicates
@@ -718,7 +647,7 @@ def new_main():
                 bilets = bilets[bilets["bet"].isin(betTypes) & (bilets["cancelable"] == True)]
                 bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
 
-        print(f"\n🚬 Bilet Yok! Sigara Molası: {sigara // 60} dakika...\n")
+        print(f"\n🚬 Bilet Yok! Sigara Molası: {sigara} saniye...\n")
         for remaining in range(sigara, 0, -1):
             sys.stdout.write(f"\r⏳ Bekleniyor: {remaining} saniye kaldı... ")
             sys.stdout.flush()
@@ -729,4 +658,4 @@ def new_main():
 class CheckboxNotFoundException(Exception):
     pass
 if __name__ == "__main__":
-    new_main()
+    main()
