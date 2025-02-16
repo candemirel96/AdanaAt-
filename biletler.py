@@ -34,7 +34,7 @@ targetPassword = "Covet13po."
 
 betTypes = ["6'lı Ganyan","5'li Ganyan","4'lü Ganyan","3'lü Ganyan","Çifte Bahis","Sıralı İkili Bahis"]
 sigara = 30
-
+maxCost = 50
 # Normalize hipodrom names
 replacements = {
     "ADANA": "Adana",
@@ -233,7 +233,7 @@ def load_bilets_from_json(json_file):
         pd.DataFrame: DataFrame containing filtered coupons data with only specified fields.
     """
     # Define the fields you want to extract from each coupon
-    desired_fields = ['id', 'race', 'multiplier', 'atlar', 'hipodrom', 'bet', 'cancelable']
+    desired_fields = ['id', 'race', 'multiplier', 'atlar', 'hipodrom', 'bet', 'cancelable','cost']
 
     try:
         with open(json_file, "r", encoding="utf-8") as f:
@@ -580,7 +580,12 @@ def main():
             continue
 
         bilets["hipodrom"] = bilets["hipodrom"].replace(replacements)
-        bilets = bilets[bilets["bet"].isin(betTypes) & (bilets["cancelable"] == True)]
+        bilets["cost"] = pd.to_numeric(bilets["cost"], errors='coerce')
+        bilets = bilets[
+            (bilets["bet"].isin(betTypes)) &
+            (bilets["cancelable"] == True) &
+            (bilets["cost"] <= maxCost)
+        ]
         bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
 
         no_new_ticket_count = 0
@@ -620,7 +625,12 @@ def main():
                 post_biletlerim_retrievedata(session)
                 bilets = load_bilets_from_json("my-output.json")
                 bilets["hipodrom"] = bilets["hipodrom"].replace(replacements)
-                bilets = bilets[bilets["bet"].isin(betTypes) & (bilets["cancelable"] == True)]
+                bilets["cost"] = pd.to_numeric(bilets["cost"], errors='coerce')
+                bilets = bilets[
+                    (bilets["bet"].isin(betTypes)) &
+                    (bilets["cancelable"] == True) &
+                    (bilets["cost"] <= maxCost)
+                    ]
                 bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
 
         print(f"\n🚬 Bilet Yok! Sigara Molası: {sigara} saniye...\n")
