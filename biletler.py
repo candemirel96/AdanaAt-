@@ -20,12 +20,18 @@ import pandas as pd
 # ACCOUNT-DATA
 sourceAccount = "kumsalkarauzum97@gmail.com"
 sourcePassword = "Kumsalkara."
+
 # CEMAL TEST
 # sourceAccount = "cemalcandogan@gmail.com"
 # sourcePassword = "Covet13po."
 
 targetAccount = "cemalcandogan@gmail.com"
 targetPassword = "Covet13po."
+
+# # CAN TEST
+# targetAccount = "candemirel96@gmail.com"
+# targetPassword = "O123Gelincik"
+
 betTypes = ["6'lı Ganyan","5'li Ganyan","4'lü Ganyan","3'lü Ganyan","Çifte Bahis","Sıralı İkili Bahis"]
 sigara = 30
 def login_to_ebayi():
@@ -274,6 +280,7 @@ def login_to_site(driver, username, password):
         None
     """
     # Navigate to the login page
+
     driver.get("https://ebayi.tjk.org")  # Adjust URL if different
 
     # Initialize WebDriverWait with a 20-second timeout
@@ -340,27 +347,28 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
 
         # Step 1: Click on the 'BAHİS YAP' link with modal check
         max_attempts = 5
-        attempts = 0
-
-        while attempts < max_attempts:
+        close_invalid_race_popup(driver)
+        for attempts in range(1, max_attempts + 1):
             try:
                 bahis_yap_link = driver.find_element(By.XPATH,
                                                      "//a[contains(@href, '/bahis-yap-advanced') and contains(text(), 'BAHİS YAP')]")
                 bahis_yap_link.click()
-                print("Clicked on 'BAHİS YAP' link.")
+                print(f"Clicked on 'BAHİS YAP' link. (Attempt {attempts}/{max_attempts})")
                 break  # Success
             except Exception as e:
                 if close_invalid_race_popup(driver):
-                    print(f"Modal closed. Retrying... ({attempts + 1}/{max_attempts})")
+                    print(f"⚠️ Modal closed. Retrying ({attempts}/{max_attempts})...")
                 else:
                     print(f"Unexpected click interception: {e}")
-            attempts += 1
             time.sleep(1)
 
         if attempts == max_attempts:
-            raise Exception("Failed to click 'BAHİS YAP' after multiple attempts due to modal issues.")
+            print("❌ Failed to click 'BAHİS YAP' after multiple attempts due to modal issues.")
+            time.sleep(1)  # short pause before refreshing
+            driver.get("https://ebayi.tjk.org")
+            return
 
-
+        # Step 1.5: Clear bilet
         try:
             clear_button = driver.find_element(By.XPATH, "//button[@data-selector='clear-button']")
             clear_button.click()
@@ -369,99 +377,87 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
             print("Clear Bilet button not found. Continuing without clicking.")
 
         time.sleep(1)
-        # Step 2: Locate and click the dropdown toggle to expand it
-        dropdown_toggle = driver.find_element(By.CSS_SELECTOR, "a.btn.btn-glossred.dropdown-toggle")
-        dropdown_toggle.click()
-        print("Clicked on the dropdown toggle to expand the submenu.")
 
-        # # Wait briefly to ensure the dropdown menu is displayed
-        # time.sleep(2)
+        # Step 2: Select Hipodrom
+        try:
+            dropdown_toggle = driver.find_element(By.CSS_SELECTOR, "a.btn.btn-glossred.dropdown-toggle")
+            dropdown_toggle.click()
+            print("Clicked on the dropdown toggle to expand the submenu.")
 
-        # Step 3: Locate the specific <a> element containing the desired hipodrom name
-        hipodrom_xpath = f"//a[@class='dropdown-item' and text()='{hipodrom}']"
-        hipodrom_element = driver.find_element(By.XPATH, hipodrom_xpath)
+            hipodrom_xpath = f"//a[@class='dropdown-item' and text()='{hipodrom}']"
+            hipodrom_element = driver.find_element(By.XPATH, hipodrom_xpath)
+            hipodrom_element.click()
+            print(f"Selected hipodrom: {hipodrom}")
+        except Exception as e:
+            print(f"⚠️ Failed to select hipodrom: {e}")
+            time.sleep(1)  # short pause before refreshing
+            driver.get("https://ebayi.tjk.org")
+            return
 
-        # Click the hipodrom link
-        hipodrom_element.click()
-        print(f"Selected hipodrom: {hipodrom}")
+        # Step 3: Select Bet Type
+        try:
+            dropdown_toggles = driver.find_elements(By.CSS_SELECTOR, "a.btn.btn-glossred.dropdown-toggle")
+            if len(dropdown_toggles) >= 2:
+                dropdown_toggles[1].click()
+                print("Clicked on the second dropdown toggle")
+            else:
+                print("Less than two dropdown toggles found.")
 
-        # Step 4: Locate and click the dropdown toggle for race type
-        # Locate the specific anchor using its class and text
-        dropdown_toggles = driver.find_elements(By.CSS_SELECTOR, "a.btn.btn-glossred.dropdown-toggle")
-        if len(dropdown_toggles) >= 2:
-            dropdown_toggles[1].click()
-            print("Clicked on the second dropdown toggle")
-        else:
-            print("Less than two dropdown toggles found.")
-        # Wait briefly to ensure the dropdown menu is displayed
-        # time.sleep(2)
+            bet_xpath = f'//a[@class="dropdown-item" and text()="{bet}"]'
+            bet_element = driver.find_element(By.XPATH, bet_xpath)
+            bet_element.click()
+            print(f"Selected bet: {bet}")
+        except Exception as e:
+            print(f"⚠️ Failed to select bet type: {e}")
+            time.sleep(1)  # short pause before refreshing
+            driver.get("https://ebayi.tjk.org")
+            return
 
-        # Step 5: Locate the specific <a> element containing the desired race type (bet)
-        bet_xpath = f'//a[@class="dropdown-item" and text()="{bet}"]'
-        bet_element = driver.find_element(By.XPATH, bet_xpath)
-
-        # Click the bet link
-        bet_element.click()
-        print(f"Selected bet: {bet}")
-
-        # Step 6: Locate and select atlar data
-        # Parse the 'atlar' data
-        runs = atlar.split("/")  # Split into runs
+        # Step 4: Select Horses
+        runs = atlar.split("/")
         for run_index, run_data in enumerate(runs, start=1):
-            horses = run_data.split(",")  # Split horse numbers for this run
+            horses = run_data.split(",")
             for horse_no in horses:
-                horse_no = horse_no.strip()  # Remove any extra spaces
-                horse_id = f"run-{run_index}-horse-{horse_no}"  # Construct the input ID
-
+                horse_no = horse_no.strip()
+                horse_id = f"run-{run_index}-horse-{horse_no}"
                 try:
-                    # Locate the label associated with the checkbox
                     label = driver.find_element(By.XPATH, f"//label[@for='{horse_id}']")
-
-                    # Scroll the label into view
                     driver.execute_script("arguments[0].scrollIntoView(true);", label)
-
-                    # Click the label using ActionChains
                     actions = ActionChains(driver)
                     actions.move_to_element(label).click().perform()
                     print(f"Selected horse: Run {run_index}, Horse {horse_no}")
-
-                except NoSuchElementException:
-                    print(f"Label for checkbox with ID '{horse_id}' not found. Skipping this horse.")
                 except Exception as e:
-                    print(f"Could not interact with label for '{horse_id}': {e}")
+                    print(f"⚠️ Failed to select horse {horse_id}: {e}")
 
-        # Step 7: Enter Multiplier data
-        multiplier_input = driver.find_element(
-            By.XPATH, "//input[@type='number' and @placeholder='Misli']"
-        )
-
-        # Validate the multiplier value
-        multiplier = max(1, min(multiplier, 3250))  # Clamp multiplier between 1 and 3250
-
-        # Clear the input field before entering the value
+        # Step 5: Set Multiplier
         try:
+            multiplier_input = driver.find_element(By.XPATH, "//input[@type='number' and @placeholder='Misli']")
+            multiplier = max(1, min(multiplier, 3250))
             multiplier_input.clear()  # First try standard clear
             multiplier_input.send_keys(Keys.CONTROL + "a")  # Highlight all text
             multiplier_input.send_keys(Keys.DELETE)  # Delete highlighted text
-        except Exception:
-            # Use JavaScript as a fallback if .clear() doesn't work
-            driver.execute_script("arguments[0].value = '';", multiplier_input)
+            multiplier_input.send_keys(str(multiplier))
+            print(f"Entered multiplier value: {multiplier}")
+        except Exception as e:
+            print(f"⚠️ Failed to set multiplier: {e}")
+            time.sleep(1)  # short pause before refreshing
+            driver.get("https://ebayi.tjk.org")
+            return
 
-        # Enter the multiplier value
-        multiplier_input.send_keys(str(multiplier))
-        print(f"Entered multiplier value: {multiplier}")
+        # Step 6: Click OYNA
+        try:
+            button = driver.find_element(By.XPATH, "//button[text()='OYNA']")
+            button.click()
+            print("Clicked the submit button to create the bilet.")
+        except Exception as e:
+            print(f"⚠️ Failed to click 'OYNA': {e}")
+            time.sleep(1)  # short pause before refreshing
+            driver.get("https://ebayi.tjk.org")
+            return
 
-        # Step 8: Locate and click the submit button
-        button = driver.find_element(By.XPATH, "//button[text()='OYNA']")
-        button.click()
-        print("Clicked the submit button to create the bilet.")
-
-        # Step 9: Wait for the checkbox in the pop-up (retry mechanism)
+        # Step 7: Checkbox & Onayla
         checkbox_appeared = False
-        wait_time = 30  # Maximum wait time (seconds)
-        check_interval = 1  # Check every 1 second
-
-        for _ in range(wait_time // check_interval):  # Loop to keep checking
+        for _ in range(30):
             try:
                 label = driver.find_element(By.XPATH, "//label[@for='approveChecksum']")
                 driver.execute_script("arguments[0].scrollIntoView(true);", label)
@@ -469,42 +465,35 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
                 actions.move_to_element(label).click().perform()
                 print("Selected the checkbox in the confirmation pop-up.")
                 checkbox_appeared = True
-                break  # Exit loop once checkbox is found and clicked
+                break
             except NoSuchElementException:
-                print("Waiting for the confirmation pop-up checkbox to appear...")
-                time.sleep(check_interval)  # Wait and retry
-            except Exception as e:
-                print(f"Unexpected error while waiting for checkbox: {e}")
-                return  # Return to main loop on any unexpected error
+                time.sleep(1)
 
         if not checkbox_appeared:
-            print("Error: Checkbox did not appear after waiting. Skipping this ticket and moving to the next one.")
-            return  # Simply return to continue with the next ticket in the main loop
+            print("❌ Checkbox pop-up did not appear.")
+            time.sleep(1)  # short pause before refreshing
+            driver.get("https://ebayi.tjk.org")
+            return
 
-        # Scroll the label into view
-        driver.execute_script("arguments[0].scrollIntoView(true);", label)
+        # Step 8: Onayla
+        try:
+            approve_button = driver.find_element(By.ID, "approveButton")
+            approve_button.click()
+            print("Clicked the 'Onayla' button to finalize the bilet.")
+        except Exception as e:
+            print(f"⚠️ Failed to click 'Onayla': {e}")
+            time.sleep(1)  # short pause before refreshing
+            driver.get("https://ebayi.tjk.org")
+            return
 
-        # Step 10: Locate and click the 'Onayla' button
-        approve_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.ID, "approveButton"))
-        )
-        approve_button.click()
-        print("Clicked the 'Onayla' button to finalize the bilet.")
-
-        # Navigate back to the main page
+        # Step 9: Return to Main Page
         driver.get("https://ebayi.tjk.org")
-        print("Navigated back to the main page.")
-
-
-    except NoSuchElementException as e:
-        print(f"NoSuchElementException: {e}")
-        driver.quit()
-        exit(1)
+        print("✅ Bilet created successfully. Navigated back to the main page.")
 
     except Exception as e:
-        print(f"An unexpected error occurred during navigation: {e}")
-        driver.quit()
-        exit(1)
+        print(f"❌ Unexpected Error in Bilet Creation: {e}")
+        time.sleep(1)  # short pause before refreshing
+        driver.get("https://ebayi.tjk.org")
 
 
 def load_created_bilets():
@@ -539,7 +528,7 @@ def main():
 
     # Step 4: Set up Selenium
     driver = setup_selenium()
-    login_to_site(driver, "cemalcandogan@gmail.com", "Covet13po.")
+    login_to_site(driver, targetAccount, targetPassword)
 
     # Normalize hipodrom names
     replacements = {
@@ -568,17 +557,15 @@ def main():
         "WHAMPTON": "Wolverhampton Birleşik Krallık"
     }
 
+    processed_bilets = set()  # Reset this for every big cycle (every refresh)
     # Infinite loop to keep checking for new tickets
     while True:
-        # 🟢 Always refresh my-output.json at the start of each cycle!
+
+
         print("\n🔄 Yeni biletler kontrol ediliyor...\n")
         post_biletlerim_retrievedata(session)
 
-        # Step 5: Load bilets from JSON
         bilets = load_bilets_from_json("my-output.json")
-
-
-
 
         if bilets.empty:
             print(f"\n🚬 Bilet Yok! Sigara Molası: {sigara} saniye...\n")
@@ -588,61 +575,56 @@ def main():
                 time.sleep(1)
 
             print("\n✅ Süre doldu! Tekrar kontrol ediliyor...\n")
-            continue  # Restart loop
+            continue
 
-        # Apply filters
         bilets["hipodrom"] = bilets["hipodrom"].replace(replacements)
         bilets = bilets[bilets["bet"].isin(betTypes) & (bilets["cancelable"] == True)]
-        bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]  # Remove duplicates
-        # Track processed tickets and consecutive empty refreshes
-        processed_bilets = set()
+        bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
+
         no_new_ticket_count = 0
 
-        while no_new_ticket_count < 3:  # Stop after 3 consecutive empty refreshes
-            found_new_ticket = False  # Track if any new tickets were processed
+        while no_new_ticket_count < 3:
+            found_new_ticket = False
 
             for index, coupon in bilets.iterrows():
-                bilet_id = str(coupon["id"])  # Ensure it's a string
+                bilet_id = str(coupon["id"])
 
-                # Check if already created
                 if bilet_id in created_bilets or bilet_id in processed_bilets:
-                    continue  # Skip already processed tickets
+                    continue
 
-                # Extract required fields
                 race = coupon["race"]
                 multiplier = coupon["multiplier"]
                 atlar = coupon["atlar"]
                 hipodrom = coupon["hipodrom"]
                 bet = coupon["bet"]
 
-                # Process the bilet
                 try:
                     create_bilet(driver, race, multiplier, atlar, hipodrom, bet)
+                    save_created_bilet(bilet_id)
+                    created_bilets = load_created_bilets()  # 🔄 Sync back after each success
+                    processed_bilets.add(bilet_id)
+                    found_new_ticket = True
+
                 except CheckboxNotFoundException as e:
                     print(f"⚠️ {e} — Moving to the next ticket.")
-                    driver.get("https://ebayi.tjk.org")  # Optional, reset back to home
-                    continue  # Skip this ticket and move to the next one
+                    driver.get("https://ebayi.tjk.org")
+                    continue
 
-                # Save newly created bilet
-                save_created_bilet(bilet_id)
-
-                # Mark bilet as processed in this session
-                processed_bilets.add(bilet_id)
-                created_bilets.add(bilet_id)  # Ensure it doesn't reappear after refresh
-                found_new_ticket = True
+                except Exception as e:
+                    print(f"⚠️ Unexpected error with bilet {bilet_id}: {e}")
+                    driver.get("https://ebayi.tjk.org")
+                    continue
 
             if not found_new_ticket:
                 no_new_ticket_count += 1
                 print(f"\n🔄 No new tickets found. Attempt {no_new_ticket_count}/3.\n")
             else:
-                no_new_ticket_count = 0  # Reset counter if new tickets found
+                no_new_ticket_count = 0
 
             if no_new_ticket_count < 3:
                 print("\n✅ Refreshing `my-output.json` to check for new tickets...\n")
                 post_biletlerim_retrievedata(session)
                 bilets = load_bilets_from_json("my-output.json")
-
-                # Reapply filters
                 bilets["hipodrom"] = bilets["hipodrom"].replace(replacements)
                 bilets = bilets[bilets["bet"].isin(betTypes) & (bilets["cancelable"] == True)]
                 bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
@@ -654,7 +636,6 @@ def main():
             time.sleep(1)
 
         print("\n✅ Süre doldu! Tekrar kontrol ediliyor...\n")
-
 class CheckboxNotFoundException(Exception):
     pass
 if __name__ == "__main__":
