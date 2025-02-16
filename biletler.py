@@ -35,7 +35,7 @@ targetPassword = "Covet13po."
 betTypes = ["6'lı Ganyan","5'li Ganyan","4'lü Ganyan","3'lü Ganyan","Çifte Bahis","Sıralı İkili Bahis"]
 sigara = 30
 maxCost = 50
-# Normalize hipodrom names
+# Normalize hipodrom name
 replacements = {
     "ADANA": "Adana",
     "ANTALYA": "Antalya",
