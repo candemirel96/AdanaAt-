@@ -32,9 +32,15 @@ sourcePassword = "Covet13po."
 targetAccount = "candemirel96@gmail.com"
 targetPassword = "O123Gelincik"
 
-betTypes = ["6'lı Ganyan","5'li Ganyan","4'lü Ganyan","3'lü Ganyan","Çifte Bahis","Sıralı İkili Bahis"]
+# betTypes = ["6'lı Ganyan","5'li Ganyan","4'lü Ganyan","3'lü Ganyan","Çifte Bahis","Sıralı İkili Bahis"]
+betTypes = ["5'li Ganyan"]
 sigara = 20
 max_amount_by_race_type = {
+    "6'lı Ganyan": 5,
+    "Çifte Bahis": 80,
+    "Sıralı İkili Bahis": 80
+}
+min_amount_by_race_type = {
     "6'lı Ganyan": 5,
     "Çifte Bahis": 80,
     "Sıralı İkili Bahis": 80
@@ -44,32 +50,46 @@ replacements = {
     "ADANA": "Adana",
     "ANTALYA": "Antalya",
     "AVUBELMONT": "Belmont Avustralya",
-    "BURSA": "Bursa",
     "BORELY": "Marseille Borely Fransa",
+    "BURSA": "Bursa",
     "CAGNESSUR": "Cagnes Sur Mer Fransa",
     "CHANTILLY": "Chantilly Fransa",
     "CHELMSFORD": "Chelmsford City Birleşik Krallık",
+    "DUBAI": "Meydan Dubai",
+    "DURBANVILL": "Durbanville Guney Afrika",
     "FAIRVIEW": "Fairview Guney Afrika",
+    "GREYVILLE": "Greyville Guney Afrika",
     "GULFSTREAM": "Gulfstream Park ABD",
     "HAPPYVALLE": "Happy Valley Hong Kong",
     "ISTANBUL": "İstanbul",
     "IZMIR": "İzmir",
     "KENILWORTH": "Kenilworth Guney Afrika",
     "KEMPTON": "Kempton Park Birleşik Krallık",
+    "LAUNCESTON": "Launceston Avustralya",
+    "LAUREL": "Laurel Park ABD",
     "LINGFIELD": "Lingfield Birleşik Krallık",
+    "LYON": "Lyon la Soie Fransa",
     "MAHONING": "Mahoning Valley ABD",
     "MOONEEVALL": "Moonee Valley Avustralya",
-    "PARADISE": "Turf Paradise ABD",
+    "NARROGIN": "Narrogin Avustralya",
+    "NEWCASTLE": "Newcastle Birleşik Krallık",
     "PAKENHAM": "Pakenham Avustralya",
+    "PARADISE": "Turf Paradise ABD",
     "PAU": "Pau Fransa",
+    "PERTHASCOT": "Perth Ascot Avustralya",
     "PHILADELPH": "Philadelphia ABD",
     "PINJARRA": "Pinjarra Park Avustralya",
     "PORNICHET": "Pornichet La Baule Fransa",
+    "RIYAD": "Riyad Suudi Arabistan",
+    "ROGERSDOWN": "Will Rogers Downs ABD",
+    "SAINTCLOUD": "Saint Cloud Fransa",
     "SANLIURFA": "Şanlıurfa",
     "SANTAANITA": "Santa Anita Park ABD",
     "SCOTTSVILL": "Scottsville Guney Afrika",
     "SHATIN": "Sha Tin Hong Kong",
     "SOUTHWELL": "Southwell Birleşik Krallık",
+    "TOOWOOMBA": "Toowoomba Avustralya",
+    "TOULOUSE": "Toulouse Fransa",
     "TURFFONTEI": "Turffontein Guney Afrika",
     "VAAL": "Vaal Guney Afrika",
     "WHAMPTON": "Wolverhampton Birleşik Krallık"
@@ -290,12 +310,14 @@ def setup_selenium():
     chrome_options = Options()
 
     # Enable headless mode
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--disable-gpu")  # Disable GPU acceleration
-    chrome_options.add_argument("--disable-extensions")  # Disable browser extensions
-    chrome_options.add_argument("--disable-software-rasterizer")  # Software rasterization
-    chrome_options.add_argument("--no-sandbox")  # Recommended for headless mode
-    chrome_options.add_argument("--disable-dev-shm-usage")  # Prevent issues with /dev/shm on Linux
+    chrome_options.add_argument("--headless=new")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--disable-software-rasterizer")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.add_argument("--disable-extensions")
+    chrome_options.add_argument("--disable-gpu")  # Crucial for GPU error
+    chrome_options.add_argument("--log-level=3")  # Suppresses errors and warnings
 
     # Initialize the Service object with the path to chromedriver.exe
     service = Service(executable_path="chromedriver.exe")
@@ -746,6 +768,7 @@ def main():
             (bilets["bet"].isin(betTypes)) &
             (bilets["cancelable"] == True) &
             (bilets["cost"].astype(float) <= bilets["bet"].map(max_amount_by_race_type).fillna(float('inf')))
+            (bilets["cost"].astype(float) >= bilets["bet"].map(min_amount_by_race_type).fillna(0))
         ]
         bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
 
