@@ -18,12 +18,12 @@ from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 
 # ACCOUNT-DATA
-sourceAccount = "kumsalkarauzum97@gmail.com"
-sourcePassword = "Kumsalkara."
+# sourceAccount = "kumsalkarauzum97@gmail.com"
+# sourcePassword = "Kumsalkara."
 
 # CEMAL TEST
-# sourceAccount = "cemalcandogan@gmail.com"
-# sourcePassword = "Covet13po."
+sourceAccount = "cemalcandogan@gmail.com"
+sourcePassword = "Covet13po."
 
 # targetAccount = "cemalcandogan@gmail.com"
 # targetPassword = "Covet13po."
@@ -33,14 +33,16 @@ targetAccount = "candemirel96@gmail.com"
 targetPassword = "O123Gelincik"
 
 # betTypes = ["6'lı Ganyan","5'li Ganyan","4'lü Ganyan","3'lü Ganyan","Çifte Bahis","Sıralı İkili Bahis"]
-betTypes = ["5'li Ganyan"]
+betTypes = ["Ganyan"]
 sigara = 20
 max_amount_by_race_type = {
+    "Ganyan": 99,
     "6'lı Ganyan": 5,
     "Çifte Bahis": 80,
     "Sıralı İkili Bahis": 80
 }
 min_amount_by_race_type = {
+    "Ganyan": 11,
     "6'lı Ganyan": 5,
     "Çifte Bahis": 80,
     "Sıralı İkili Bahis": 80
@@ -94,6 +96,8 @@ replacements = {
     "VAAL": "Vaal Guney Afrika",
     "WHAMPTON": "Wolverhampton Birleşik Krallık"
 }
+
+
 def login_to_ebayi():
     """
     Step 1: Log in to ebayi.tjk.org (POST /giris) with user, pass, keep_login.
@@ -146,16 +150,8 @@ def login_to_ebayi():
     # Send the login request
     resp = session.post(login_url, headers=headers, data=login_payload)
 
-    print("Login status code:", resp.status_code)
-    try:
-        print("Login response JSON:", resp.json())
-    except ValueError:
-        print("Login response text:", resp.text)
-
-    # After this, session.cookies should have any new cookies set by the server
-    print("Cookies after login:", session.cookies.get_dict())
-
     return session
+
 
 def post_biletlerim(session):
     """
@@ -193,12 +189,9 @@ def post_biletlerim(session):
     data = {}
 
     resp = session.post(url, headers=headers, data=data)
-    print("POST /biletlerim -> status code:", resp.status_code)
-    print("Response text:", resp.text)
 
-    # Check cookies again—maybe the server updates 'cs' again
-    print("Cookies after /biletlerim:", session.cookies.get_dict())
     return resp
+
 
 def post_biletlerim_retrievedata(session):
     """
@@ -243,6 +236,7 @@ def post_biletlerim_retrievedata(session):
 
     print("Failed to refresh tickets after 3 attempts.")
 
+
 def save_json_to_file(json_resp, filename="response.json"):
     """
     Saves the given JSON object to a file with pretty indentation.
@@ -253,6 +247,7 @@ def save_json_to_file(json_resp, filename="response.json"):
         json.dump(json_resp, f, ensure_ascii=False, indent=4)
 
     # print(f"JSON response successfully saved to {filename}")
+
 
 def load_bilets_from_json(json_file):
     """
@@ -265,7 +260,7 @@ def load_bilets_from_json(json_file):
         pd.DataFrame: DataFrame containing filtered coupons data with only specified fields.
     """
     # Define the fields you want to extract from each coupon
-    desired_fields = ['id', 'race', 'multiplier', 'atlar', 'hipodrom', 'bet', 'cancelable','cost']
+    desired_fields = ['id', 'race', 'multiplier', 'atlar', 'hipodrom', 'bet', 'cancelable', 'cost']
 
     try:
         with open(json_file, "r", encoding="utf-8") as f:
@@ -301,6 +296,7 @@ def load_bilets_from_json(json_file):
     except Exception as e:
         logging.error(f"An unexpected error occurred: {e}")
         return pd.DataFrame()
+
 
 def setup_selenium():
     """
@@ -377,17 +373,20 @@ def login_to_site(driver, username, password):
         driver.quit()
         exit(1)
 
+
 def close_invalid_race_popup(driver):
     try:
-        modal_close_button = driver.find_element(By.XPATH, "//div[contains(@class, 'invalid-race')]//button[text()='Tamam']")
+        modal_close_button = driver.find_element(By.XPATH,
+                                                 "//div[contains(@class, 'invalid-race')]//button[text()='Tamam']")
         modal_close_button.click()
         print("Closed the invalid race modal.")
         time.sleep(1)  # Let it settle
         return True
     except NoSuchElementException:
         return False
+
+
 def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
-
     try:
         # Step 0: Ensure we are on the main page
         driver.get("https://ebayi.tjk.org")
@@ -543,63 +542,35 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
 
     except Exception as e:
         print(f"❌ Unexpected Error in Bilet Creation: {e}")
-    time.sleep(1)
     driver.get("https://ebayi.tjk.org")
     return False  # ❌ Failure
+
+
 def create_bilet_faster(driver, race, multiplier, atlar, hipodrom, bet):
-
     try:
-        # Step 0: Ensure we are on the main page
-        driver.get("https://ebayi.tjk.org")
-        print("Navigated to the main page.")
+        wait = WebDriverWait(driver, 5)  # Faster wait instead of sleep
 
-        # Step 1: Click on the 'BAHİS YAP' link with modal check
-        max_attempts = 3
-        close_invalid_race_popup(driver)
-        for attempts in range(1, max_attempts + 1):
-            try:
-                bahis_yap_link = driver.find_element(By.XPATH,
-                                                     "//a[contains(@href, '/bahis-yap-advanced') and contains(text(), 'BAHİS YAP')]")
-                bahis_yap_link.click()
-                print(f"Clicked on 'BAHİS YAP' link. (Attempt {attempts}/{max_attempts})")
-                break  # Success
-            except Exception as e:
-                if close_invalid_race_popup(driver):
-                    print(f"⚠️ Modal closed. Retrying ({attempts}/{max_attempts})...")
-                else:
-                    print(f"Unexpected click interception: {e}")
-            time.sleep(1)
+        # Step 1: Ensure we are on the 'BAHİS YAP' page
+        driver.get("https://ebayi.tjk.org/bahis-yap-advanced")
+        print("Navigated to 'BAHİS YAP' page.")
 
-        if attempts == max_attempts:
-            print("❌ Failed to click 'BAHİS YAP' after multiple attempts due to modal issues.")
-            time.sleep(1)  # short pause before refreshing
-            driver.get("https://ebayi.tjk.org")
-            return
-
-        # Step 1.5: Clear bilet
+        # Step 1.5: Clear previous selections if any
         try:
-            clear_button = driver.find_element(By.XPATH, "//button[@data-selector='clear-button']")
+            clear_button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[@data-selector='clear-button']")))
             clear_button.click()
             print("Clicked on 'Clear Bilet' button.")
-        except NoSuchElementException:
-            print("Clear Bilet button not found. Continuing without clicking.")
-
-        time.sleep(1)
+        except Exception:
+            print("Clear Bilet button not found, continuing.")
 
         # Step 2: Select Hipodrom
         try:
-            dropdown_toggle = driver.find_element(By.CSS_SELECTOR, "a.btn.btn-glossred.dropdown-toggle")
+            dropdown_toggle = wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, "a.btn.btn-glossred.dropdown-toggle")))
             dropdown_toggle.click()
-            print("Clicked on the dropdown toggle to expand the submenu.")
-
-            hipodrom_xpath = f"//a[@class='dropdown-item' and text()='{hipodrom}']"
-            hipodrom_element = driver.find_element(By.XPATH, hipodrom_xpath)
+            hipodrom_element = wait.until(EC.element_to_be_clickable((By.XPATH, f"//a[@class='dropdown-item' and text()='{hipodrom}']")))
             hipodrom_element.click()
-            print(f"Selected hipodrom: {hipodrom}")
-        except Exception as e:
-            print(f"⚠️ Failed to select hipodrom: {e}")
-            time.sleep(1)  # short pause before refreshing
-            driver.get("https://ebayi.tjk.org")
+            print(f"✅ Selected hipodrom: {hipodrom}")
+        except Exception:
+            print(f"⚠️ Failed to select hipodrom: {hipodrom}")
             return
 
         # Step 3: Select Bet Type
@@ -607,60 +578,45 @@ def create_bilet_faster(driver, race, multiplier, atlar, hipodrom, bet):
             dropdown_toggles = driver.find_elements(By.CSS_SELECTOR, "a.btn.btn-glossred.dropdown-toggle")
             if len(dropdown_toggles) >= 2:
                 dropdown_toggles[1].click()
-                print("Clicked on the second dropdown toggle")
-            else:
-                print("Less than two dropdown toggles found.")
-
-            bet_xpath = f'//a[@class="dropdown-item" and text()="{bet}"]'
-            bet_element = driver.find_element(By.XPATH, bet_xpath)
+            bet_element = wait.until(EC.element_to_be_clickable((By.XPATH, f'//a[@class="dropdown-item" and text()="{bet}"]')))
             bet_element.click()
-            print(f"Selected bet: {bet}")
-        except Exception as e:
-            print(f"⚠️ Failed to select bet type: {e}")
-            time.sleep(1)  # short pause before refreshing
-            driver.get("https://ebayi.tjk.org")
+            print(f"✅ Selected bet: {bet}")
+        except Exception:
+            print(f"⚠️ Failed to select bet type: {bet}")
             return
 
-        # Step 4: Select Horses
-        runs = atlar.split("/")
-        for run_index, run_data in enumerate(runs, start=1):
-            horses = run_data.split(",")
-            for horse_no in horses:
-                horse_no = horse_no.strip()
-                horse_id = f"run-{run_index}-horse-{horse_no}"
-                try:
-                    label = driver.find_element(By.XPATH, f"//label[@for='{horse_id}']")
-                    driver.execute_script("arguments[0].scrollIntoView(true);", label)
-                    actions = ActionChains(driver)
-                    actions.move_to_element(label).click().perform()
-                    print(f"Selected horse: Run {run_index}, Horse {horse_no}")
-                except Exception as e:
-                    print(f"⚠️ Failed to select horse {horse_id}: {e}")
-
-        # Step 5: Set Multiplier
+        # Step 4: Select Horses (Bulk Optimization)
         try:
-            multiplier_input = driver.find_element(By.XPATH, "//input[@type='number' and @placeholder='Misli']")
-            multiplier = max(1, min(multiplier, 3250))
-            multiplier_input.clear()  # First try standard clear
-            multiplier_input.send_keys(Keys.CONTROL + "a")  # Highlight all text
-            multiplier_input.send_keys(Keys.DELETE)  # Delete highlighted text
-            multiplier_input.send_keys(str(multiplier))
-            print(f"Entered multiplier value: {multiplier}")
-        except Exception as e:
-            print(f"⚠️ Failed to set multiplier: {e}")
-            time.sleep(1)  # short pause before refreshing
-            driver.get("https://ebayi.tjk.org")
+            runs = atlar.split("/")
+            for run_index, run_data in enumerate(runs, start=1):
+                horse_labels = {label.get_attribute("for"): label for label in driver.find_elements(By.XPATH, f"//label[starts-with(@for, 'run-{run_index}-horse-')]")}
+                for horse_no in run_data.split(","):
+                    horse_id = f"run-{run_index}-horse-{horse_no.strip()}"
+                    if horse_id in horse_labels:
+                        driver.execute_script("arguments[0].click();", horse_labels[horse_id])  # JavaScript click for instant response
+                        print(f"✅ Selected horse: Run {run_index}, Horse {horse_no}")
+                    else:
+                        print(f"⚠️ Horse {horse_no} not found in Run {run_index}, skipping.")
+        except Exception:
+            print("⚠️ Error selecting horses.")
+
+        # Step 5: Set Multiplier (Ensuring Input is Cleared Properly)
+        try:
+            multiplier_input = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='number' and @placeholder='Misli']")))
+            driver.execute_script("arguments[0].value = '';", multiplier_input)  # Clears value directly
+            multiplier_input.send_keys(str(min(max(multiplier, 1), 3250)))  # Ensure within range
+            print(f"✅ Entered multiplier value: {multiplier}")
+        except Exception:
+            print("⚠️ Failed to set multiplier.")
             return
 
-        # Step 6: Click OYNA
+        # Step 6: Click 'OYNA'
         try:
-            button = driver.find_element(By.XPATH, "//button[text()='OYNA']")
+            button = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[text()='OYNA']")))
             button.click()
-            print("Clicked the submit button to create the bilet.")
-        except Exception as e:
-            print(f"⚠️ Failed to click 'OYNA': {e}")
-            time.sleep(1)  # short pause before refreshing
-            driver.get("https://ebayi.tjk.org")
+            print("✅ Clicked the 'OYNA' button.")
+        except Exception:
+            print("⚠️ Failed to click 'OYNA'.")
             return
 
         # Step 7: Checkbox & Onayla
@@ -694,18 +650,9 @@ def create_bilet_faster(driver, race, multiplier, atlar, hipodrom, bet):
             driver.get("https://ebayi.tjk.org")
             return False  # ❌ Failure
 
-        # Step 9: Return to Main Page
-        time.sleep(1)
-        driver.get("https://ebayi.tjk.org")
-        print("✅ Bilet created successfully. Navigated back to the main page.")
-
-        return True  # ✅ Success
-
     except Exception as e:
-        print(f"❌ Unexpected Error in Bilet Creation: {e}")
-    time.sleep(1)
-    driver.get("https://ebayi.tjk.org")
-    return False  # ❌ Failure
+        print(f"❌ Unexpected Error: {e}")
+        return False  # ❌ Failure
 
 def load_created_bilets():
     """Loads the list of created bilet IDs from a file."""
@@ -727,105 +674,6 @@ def save_created_bilet(bilet_id):
         json.dump(list(created_bilets), f, ensure_ascii=False, indent=4)  # Save as a list
 
 
-def main():
-    # Step 1: Load created bilet IDs
-    created_bilets = load_created_bilets()
-
-    # Step 2: Log in via Requests
-    session = login_to_ebayi()
-
-    # Step 3: Call /biletlerim to refresh/confirm token
-    post_biletlerim(session)
-
-
-
-    processed_bilets = set()  # Reset this for every big cycle (every refresh)
-    # Infinite loop to keep checking for new tickets
-    while True:
-
-        # Step 4: Set up Selenium
-        driver = setup_selenium()
-        login_to_site(driver, targetAccount, targetPassword)
-
-        print("\n🔄 Yeni biletler kontrol ediliyor...\n")
-        post_biletlerim_retrievedata(session)
-
-        bilets = load_bilets_from_json("my-output.json")
-
-        if bilets.empty:
-            print(f"\n🚬 Bilet Yok! Sigara Molası: {sigara} saniye...\n")
-            for remaining in range(sigara, 0, -1):
-                sys.stdout.write(f"\r⏳ Bekleniyor: {remaining} saniye kaldı... ")
-                sys.stdout.flush()
-                time.sleep(1)
-
-            print("\n✅ Süre doldu! Tekrar kontrol ediliyor...\n")
-            continue
-
-        bilets["hipodrom"] = bilets["hipodrom"].replace(replacements)
-        bilets["cost"] = pd.to_numeric(bilets["cost"], errors='coerce')
-        bilets = bilets[
-            (bilets["bet"].isin(betTypes)) &
-            (bilets["cancelable"] == True) &
-            (bilets["cost"].astype(float) <= bilets["bet"].map(max_amount_by_race_type).fillna(float('inf')))
-            (bilets["cost"].astype(float) >= bilets["bet"].map(min_amount_by_race_type).fillna(0))
-        ]
-        bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
-
-        no_new_ticket_count = 0
-
-        while no_new_ticket_count < 3:
-            found_new_ticket = False
-
-            for index, coupon in bilets.iterrows():
-                bilet_id = str(coupon["id"])
-
-                if bilet_id in created_bilets or bilet_id in processed_bilets:
-                    continue
-
-                race = coupon["race"]
-                multiplier = coupon["multiplier"]
-                atlar = coupon["atlar"]
-                hipodrom = coupon["hipodrom"]
-                bet = coupon["bet"]
-
-                success = create_bilet(driver, race, multiplier, atlar, hipodrom, bet)
-
-                if success:
-                    save_created_bilet(bilet_id)
-                    created_bilets = load_created_bilets()  # Keep this if you need to refresh from file
-                    processed_bilets.add(bilet_id)
-                    found_new_ticket = True
-                else:
-                    print(f"❌ Bilet creation failed for ID {bilet_id}. Skipping.")
-            if not found_new_ticket:
-                no_new_ticket_count += 1
-                print(f"\n🔄 No new tickets found. Attempt {no_new_ticket_count}/3.\n")
-            else:
-                no_new_ticket_count = 0
-
-            if no_new_ticket_count < 3:
-                print("\n✅ Refreshing `my-output.json` to check for new tickets...\n")
-                post_biletlerim_retrievedata(session)
-                bilets = load_bilets_from_json("my-output.json")
-                bilets["hipodrom"] = bilets["hipodrom"].replace(replacements)
-                bilets["cost"] = pd.to_numeric(bilets["cost"], errors='coerce')
-                bilets = bilets[
-                    (bilets["bet"].isin(betTypes)) &
-                    (bilets["cancelable"] == True) &
-                    (bilets["cost"].astype(float) <= bilets["bet"].map(max_amount_by_race_type).fillna(float('inf')))
-                    ]
-                bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
-
-        print(f"\n🚬 Bilet Yok! Sigara Molası: {sigara} saniye...\n")
-        for remaining in range(sigara, 0, -1):
-            sys.stdout.write(f"\r⏳ Bekleniyor: {remaining} saniye kaldı... ")
-            sys.stdout.flush()
-            time.sleep(1)
-
-        print("\n✅ Süre doldu! Tekrar kontrol ediliyor...\n")
-        # 🚨 Close & Restart Selenium after break
-        driver.quit()
 def main_faster():
     # Step 1: Load created bilet IDs
     created_bilets = load_created_bilets()
@@ -867,12 +715,18 @@ def main_faster():
             continue
 
         bilets["hipodrom"] = bilets["hipodrom"].replace(replacements)
-        bilets["cost"] = pd.to_numeric(bilets["cost"], errors='coerce')
+        # Ensure 'cost' is properly converted to float, invalid values become NaN
+        bilets["cost"] = pd.to_numeric(bilets["cost"], errors='coerce').fillna(0)
+
+        # Apply both min and max filters with safe mapping
+
         bilets = bilets[
             (bilets["bet"].isin(betTypes)) &
             (bilets["cancelable"] == True) &
-            (bilets["cost"].astype(float) <= bilets["bet"].map(max_amount_by_race_type).fillna(float('inf')))
-        ]
+            (bilets["cost"] <= bilets["bet"].map(max_amount_by_race_type).fillna(float('inf')))
+            ]
+        # Apply min filter and print count
+        bilets = bilets[bilets["cost"] >= bilets["bet"].map(min_amount_by_race_type).fillna(0)]
         bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
 
         no_new_ticket_count = 0
@@ -918,7 +772,8 @@ def main_faster():
                     (bilets["bet"].isin(betTypes)) &
                     (bilets["cancelable"] == True) &
                     (bilets["cost"].astype(float) <= bilets["bet"].map(max_amount_by_race_type).fillna(float('inf')))
-                ]
+                    ]
+                bilets = bilets[bilets["cost"] >= bilets["bet"].map(min_amount_by_race_type).fillna(0)]
                 bilets = bilets[~bilets["id"].astype(str).isin(created_bilets)]
 
         print(f"\n🚬 No new tickets! Waiting {sigara} seconds...\n")
@@ -934,5 +789,7 @@ def main_faster():
 
 class CheckboxNotFoundException(Exception):
     pass
+
+
 if __name__ == "__main__":
     main_faster()
