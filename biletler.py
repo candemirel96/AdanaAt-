@@ -18,12 +18,12 @@ from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 
 # ACCOUNT-DATA
-# sourceAccount = "kumsalkarauzum97@gmail.com"
-# sourcePassword = "Kumsalkara."
+sourceAccount = "kumsalkarauzum97@gmail.com"
+sourcePassword = "Kumsalkara."
 
 # CEMAL TEST
-sourceAccount = "cemalcandogan@gmail.com"
-sourcePassword = "Covet13po."
+# sourceAccount = "cemalcandogan@gmail.com"
+# sourcePassword = "Covet13po."
 
 # targetAccount = "cemalcandogan@gmail.com"
 # targetPassword = "Covet13po."
