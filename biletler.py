@@ -32,19 +32,19 @@ sourcePassword = "Covet13po."
 targetAccount = "candemirel96@gmail.com"
 targetPassword = "O123Gelincik"
 
-# betTypes = ["6'lı Ganyan","5'li Ganyan","4'lü Ganyan","3'lü Ganyan","Çifte Bahis","Sıralı İkili Bahis"]
-betTypes = ["Ganyan"]
+betTypes = ["6'lı Ganyan","5'li Ganyan","4'lü Ganyan","3'lü Ganyan","Çifte Bahis","Sıralı İkili Bahis"]
+# betTypes = ["6'lı Ganyan"]
 sigara = 20
 max_amount_by_race_type = {
     "Ganyan": 99,
-    "6'lı Ganyan": 5,
+    "6'lı Ganyan": 100,
     "Çifte Bahis": 80,
     "Sıralı İkili Bahis": 80
 }
 min_amount_by_race_type = {
     "Ganyan": 11,
     "6'lı Ganyan": 5,
-    "Çifte Bahis": 80,
+    "Çifte Bahis": 8,
     "Sıralı İkili Bahis": 80
 }
 # Normalize hipodrom name
@@ -534,7 +534,6 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
             return False  # ❌ Failure
 
         # Step 9: Return to Main Page
-        time.sleep(1)
         driver.get("https://ebayi.tjk.org")
         print("✅ Bilet created successfully. Navigated back to the main page.")
 
@@ -546,9 +545,15 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
     return False  # ❌ Failure
 
 
-def create_bilet_faster(driver, race, multiplier, atlar, hipodrom, bet):
+def create_bilet_faster(driver, race, multiplier, atlar, hipodrom, bet, created_bilets):
     try:
         wait = WebDriverWait(driver, 5)  # Faster wait instead of sleep
+
+        # Ensure bilet is not already created
+        bilet_id = f"{hipodrom}_{race}_{bet}_{atlar}_{multiplier}"  # Unique identifier
+        if bilet_id in created_bilets:
+            print(f"⚠️ Bilet {bilet_id} already created, skipping...")
+            return False
 
         # Step 1: Ensure we are on the 'BAHİS YAP' page
         driver.get("https://ebayi.tjk.org/bahis-yap-advanced")
@@ -571,7 +576,7 @@ def create_bilet_faster(driver, race, multiplier, atlar, hipodrom, bet):
             print(f"✅ Selected hipodrom: {hipodrom}")
         except Exception:
             print(f"⚠️ Failed to select hipodrom: {hipodrom}")
-            return
+            return False
 
         # Step 3: Select Bet Type
         try:
@@ -583,7 +588,7 @@ def create_bilet_faster(driver, race, multiplier, atlar, hipodrom, bet):
             print(f"✅ Selected bet: {bet}")
         except Exception:
             print(f"⚠️ Failed to select bet type: {bet}")
-            return
+            return False
 
         # Step 4: Select Horses (Bulk Optimization)
         try:
@@ -600,7 +605,7 @@ def create_bilet_faster(driver, race, multiplier, atlar, hipodrom, bet):
         except Exception:
             print("⚠️ Error selecting horses.")
 
-        # Step 5: Set Multiplier (Ensuring Input is Cleared Properly)
+        # Step 5: Set Multiplier
         try:
             multiplier_input = wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='number' and @placeholder='Misli']")))
             driver.execute_script("arguments[0].value = '';", multiplier_input)  # Clears value directly
@@ -608,7 +613,7 @@ def create_bilet_faster(driver, race, multiplier, atlar, hipodrom, bet):
             print(f"✅ Entered multiplier value: {multiplier}")
         except Exception:
             print("⚠️ Failed to set multiplier.")
-            return
+            return False
 
         # Step 6: Click 'OYNA'
         try:
@@ -617,7 +622,7 @@ def create_bilet_faster(driver, race, multiplier, atlar, hipodrom, bet):
             print("✅ Clicked the 'OYNA' button.")
         except Exception:
             print("⚠️ Failed to click 'OYNA'.")
-            return
+            return False
 
         # Step 7: Checkbox & Onayla
         checkbox_appeared = False
@@ -649,6 +654,13 @@ def create_bilet_faster(driver, race, multiplier, atlar, hipodrom, bet):
             time.sleep(1)
             driver.get("https://ebayi.tjk.org")
             return False  # ❌ Failure
+
+        # ✅ SUCCESS: Mark the Bilet as Created
+        created_bilets.add(bilet_id)  # Add to memory
+        save_created_bilet(bilet_id)  # Save to file
+        print(f"🎉 Bilet created successfully! {bilet_id} marked as done.")
+        time.sleep(1)
+        return True  # ✅ Success
 
     except Exception as e:
         print(f"❌ Unexpected Error: {e}")
@@ -746,7 +758,7 @@ def main_faster():
                 hipodrom = coupon["hipodrom"]
                 bet = coupon["bet"]
 
-                success = create_bilet(driver, race, multiplier, atlar, hipodrom, bet)
+                success = create_bilet_faster(driver, race, multiplier, atlar, hipodrom, bet, created_bilets)
 
                 if success:
                     save_created_bilet(bilet_id)
