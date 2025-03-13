@@ -18,12 +18,12 @@ from selenium.webdriver.support import expected_conditions as EC
 import pandas as pd
 
 # ACCOUNT-DATA
-# sourceAccount = "kumsalkarauzum97@gmail.com"
-# sourcePassword = "Kumsalkara."
+sourceAccount = "kumsalkarauzum97@gmail.com"
+sourcePassword = "Kumsalkara."
 
 # CEMAL TEST
-sourceAccount = "cemalcandogan@gmail.com"
-sourcePassword = "Covet13po."
+# sourceAccount = "cemalcandogan@gmail.com"
+# sourcePassword = "Covet13po."
 
 # targetAccount = "cemalcandogan@gmail.com"
 # targetPassword = "Covet13po."
@@ -32,8 +32,8 @@ sourcePassword = "Covet13po."
 targetAccount = "candemirel96@gmail.com"
 targetPassword = "O123Gelincik"
 
-betTypes = ["6'lı Ganyan","5'li Ganyan","4'lü Ganyan","3'lü Ganyan","Çifte Bahis","Sıralı İkili Bahis"]
-# betTypes = ["6'lı Ganyan"]
+# betTypes = ["6'lı Ganyan","5'li Ganyan","4'lü Ganyan","3'lü Ganyan","Çifte Bahis","Sıralı İkili Bahis"]
+betTypes = ["5'li Ganyan"]
 sigara = 20
 max_amount_by_race_type = {
     "Ganyan": 99,
@@ -69,6 +69,7 @@ replacements = {
     "KEMPTON": "Kempton Park Birleşik Krallık",
     "LAUNCESTON": "Launceston Avustralya",
     "LAUREL": "Laurel Park ABD",
+    "LEMANS": "Le Mans Fransa",
     "LINGFIELD": "Lingfield Birleşik Krallık",
     "LYON": "Lyon la Soie Fransa",
     "MAHONING": "Mahoning Valley ABD",
@@ -95,6 +96,7 @@ replacements = {
     "TURFFONTEI": "Turffontein Guney Afrika",
     "VAAL": "Vaal Guney Afrika",
     "WHAMPTON": "Wolverhampton Birleşik Krallık"
+
 }
 
 
@@ -423,7 +425,7 @@ def create_bilet(driver, race, multiplier, atlar, hipodrom, bet):
         except NoSuchElementException:
             print("Clear Bilet button not found. Continuing without clicking.")
 
-        time.sleep(1)
+        # time.sleep(1)
 
         # Step 2: Select Hipodrom
         try:
